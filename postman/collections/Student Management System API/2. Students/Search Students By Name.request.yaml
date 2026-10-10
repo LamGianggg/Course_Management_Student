@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/students/search?keyword=Nguyen"
+method: GET
+queryParams:
+  keyword: Nguyen
+order: 4000

@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/departments/1"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "name": "Information Technology - Updated",
+        "description": "Khoa Cong Nghe Thong Tin (Updated)"
+    }
+order: 4000

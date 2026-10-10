@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/students/native-by-dept-name?deptName=Information Technology"
+method: GET
+queryParams:
+  deptName: Information Technology
+order: 4000

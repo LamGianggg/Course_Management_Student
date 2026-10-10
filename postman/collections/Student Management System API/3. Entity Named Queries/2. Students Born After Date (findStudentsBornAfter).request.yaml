@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/students/born-after?dob=2003-01-01"
+method: GET
+queryParams:
+  dob: 2003-01-01
+order: 2000

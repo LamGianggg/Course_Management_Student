@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/api/students/filter-by-dob?start=2003-01-01&end=2003-12-31"
+method: GET
+queryParams:
+  start: 2003-01-01
+  end: 2003-12-31
+order: 1000

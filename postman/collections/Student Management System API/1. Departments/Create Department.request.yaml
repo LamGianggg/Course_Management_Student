@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/departments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "name": "Software Engineering",
+        "description": "Khoa Ky Thuat Phan Mem"
+    }
+order: 3000

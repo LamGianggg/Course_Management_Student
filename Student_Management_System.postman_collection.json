@@ -1,0 +1,793 @@
+{
+	"info": {
+		"_postman_id": "a9b8c7d6-e5f4-4321-abcd-1234567890ab",
+		"name": "Student Management System API",
+		"description": "Postman Collection for Simple Student and Department Management System with Spring Boot & MySQL",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Departments",
+			"item": [
+				{
+					"name": "Get All Departments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/departments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"departments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Department By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/departments/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"departments",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Department",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Software Engineering\",\n    \"description\": \"Khoa Ky Thuat Phan Mem\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/departments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"departments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Department",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Information Technology - Updated\",\n    \"description\": \"Khoa Cong Nghe Thong Tin (Updated)\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/departments/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"departments",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Department",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/departments/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"departments",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Students - Basic CRUD",
+			"item": [
+				{
+					"name": "Get All Students",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Student By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Students By Department ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/department/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"department",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Students By Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/search?keyword=Nguyen",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"search"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "Nguyen"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Student",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Nguyen Van E\",\n    \"dob\": \"2003-08-19\",\n    \"departmentId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/students",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Student",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Nguyen Van E (Updated)\",\n    \"dob\": \"2003-08-19\",\n    \"departmentId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/students/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Student",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Entity Named Queries (Các query viết trong Entity)",
+			"item": [
+				{
+					"name": "1. Filter by DOB Range (findByDobBetween)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter-by-dob?start=2003-01-01&end=2003-12-31",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter-by-dob"
+							],
+							"query": [
+								{
+									"key": "start",
+									"value": "2003-01-01"
+								},
+								{
+									"key": "end",
+									"value": "2003-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Students Born After Date (findStudentsBornAfter)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/born-after?dob=2003-01-01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"born-after"
+							],
+							"query": [
+								{
+									"key": "dob",
+									"value": "2003-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Ordered by Department Name (findAllWithDepartmentOrdered)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/ordered-by-dept",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"ordered-by-dept"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Native SQL By Dept Name (findStudentsByDeptNameNative)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/native-by-dept-name?deptName=Information Technology",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"native-by-dept-name"
+							],
+							"query": [
+								{
+									"key": "deptName",
+									"value": "Information Technology"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Filter, Pagination & Sorting (JPA Specification & Pageable)",
+			"item": [
+				{
+					"name": "1. Filter by Name (LIKE search)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?search=name:Nguyen",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name:Nguyen",
+									"description": "Tim kiem theo ten chua 'Nguyen' (khong phan biet hoa thuong)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Filter by DOB > Date",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?search=dob>2003-01-01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "dob>2003-01-01",
+									"description": "Loc sinh vien sinh sau ngay 2003-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Filter by DOB < Date",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?search=dob<2004-01-01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "dob<2004-01-01",
+									"description": "Loc sinh vien sinh truoc ngay 2004-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Filter by Department Name (Join Specification)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?search=department.name:Computer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "department.name:Computer",
+									"description": "Loc theo ten Khoa lien ket (join bang departments)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Multi-criteria Filter (AND: Name + DOB)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?search=name:Van,dob>2002-01-01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name:Van,dob>2002-01-01",
+									"description": "Ket hop nhieu dieu kien AND: ten chua 'Van' VA sinh sau 2002-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Pagination - Page 0, Size 5",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?page=0&size=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Trang dau tien (0-indexed)"
+								},
+								{
+									"key": "size",
+									"value": "5",
+									"description": "So luong sinh vien tren 1 trang"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Pagination - Page 1, Size 5",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?page=1&size=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Trang tiep theo"
+								},
+								{
+									"key": "size",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8. Sorting - Sort by Name ASC",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?sort=name,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "name,asc",
+									"description": "Sap xep ten tang dan (A-Z)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "9. Sorting - Sort by DOB DESC",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?sort=dob,desc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "dob,desc",
+									"description": "Sap xep ngay sinh giam dan (tre nhat len dau)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "10. Multi-field Sorting (Name ASC, DOB DESC)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?sort=name,asc&sort=dob,desc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "name,asc"
+								},
+								{
+									"key": "sort",
+									"value": "dob,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "11. Combined - Search + Pagination + Sorting",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?search=dob>2002-01-01&page=0&size=5&sort=name,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "dob>2002-01-01",
+									"description": "Dieu kien loc"
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Trang"
+								},
+								{
+									"key": "size",
+									"value": "5",
+									"description": "Kich thuoc trang"
+								},
+								{
+									"key": "sort",
+									"value": "name,asc",
+									"description": "Sap xep"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "12. Validation Test - Invalid Search Field (Expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?search=invalidField:test",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "invalidField:test",
+									"description": "Test bao loi khi truyen field khong hop le"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "13. Validation Test - Invalid Sort Field (Expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?sort=unknownField,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "unknownField,asc",
+									"description": "Test bao loi khi sap xep theo field khong trong whitelist"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "14. Validation Test - Invalid Page Size (Expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/filter?size=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "0",
+									"description": "Size phai tu 1 den 100"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

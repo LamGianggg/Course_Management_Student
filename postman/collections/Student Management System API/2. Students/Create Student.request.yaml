@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/students"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "name": "Nguyen Van E",
+        "dob": "2003-08-19",
+        "departmentId": 1
+    }
+order: 5000

@@ -1,0 +1,4 @@
+$kind: collection
+description: Postman Collection for Simple Student and Department Management System with Spring Boot & MySQL
+variables:
+  baseUrl: http://localhost:8080

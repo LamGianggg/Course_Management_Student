@@ -1,6 +1,9 @@
 package com.example.studentmanagement.service;
 
 import com.example.studentmanagement.entity.Document;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,4 +23,9 @@ public interface DocumentService {
     List<Document> getByAppId(String appId);
 
     List<Document> getAllActive();
+
+    // Dynamic search, pagination, and sorting using HibernateDao
+    Page<Document> filterDocuments(Specification<Document> spec, Pageable pageable);
+
+    Page<Document> filterDocuments(String search, int page, int size, List<String> sortParams);
 }

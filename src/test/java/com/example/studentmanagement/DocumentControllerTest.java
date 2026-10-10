@@ -12,6 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -150,5 +154,67 @@ public class DocumentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].id").value("uuid-123"));
+    }
+
+    @Test
+    @DisplayName("Controller: Filter documents endpoint with pagination and sorting")
+    void testFilterDocumentsEndpoint() throws Exception {
+        Document doc1 = new Document("uuid-1", "APP001", "report_q1.pdf", "path1",
+                "admin", 1.0, false, new Date(), new Date(), true);
+        Document doc2 = new Document("uuid-2", "APP001", "report_q2.pdf", "path2",
+                "admin", 1.0, false, new Date(), new Date(), true);
+
+        Page<Document> page = new PageImpl<>(List.of(doc1, doc2), PageRequest.of(0, 10), 2);
+        when(documentService.filterDocuments(any(), any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/documents/filter")
+                        .param("search", "name:report,appId:APP001")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sort", "creationTime,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(10))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.content[0].name").value("report_q1.pdf"))
+                .andExpect(jsonPath("$.data.content[1].name").value("report_q2.pdf"));
+    }
+
+    @Test
+    @DisplayName("Controller: Filter documents with invalid page size should return 400")
+    void testFilterDocumentsInvalidPageSize() throws Exception {
+        mockMvc.perform(get("/api/documents/filter")
+                        .param("page", "0")
+                        .param("size", "150"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @DisplayName("Controller: Filter documents with invalid sort field should return 400")
+    void testFilterDocumentsInvalidSortField() throws Exception {
+        mockMvc.perform(get("/api/documents/filter")
+                        .param("sort", "unauthorizedField,asc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @DisplayName("Controller: Search documents endpoint alias")
+    void testSearchDocumentsAlias() throws Exception {
+        Document doc = new Document("uuid-1", "APP001", "thesis.pdf", "path1",
+                "admin", 1.0, false, new Date(), new Date(), true);
+        Page<Document> page = new PageImpl<>(List.of(doc), PageRequest.of(0, 5), 1);
+        when(documentService.filterDocuments(any(), any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/documents/search")
+                        .param("search", "name:thesis")
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].name").value("thesis.pdf"));
     }
 }

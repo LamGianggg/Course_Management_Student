@@ -17,6 +17,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -272,6 +275,18 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<Document> getAllActive() {
         return documentDao.findAllActive();
+    }
+
+    @Override
+    public Page<Document> filterDocuments(Specification<Document> spec, Pageable pageable) {
+        logger.info("Executing document filter by specification and pageable");
+        return documentDao.filter(spec, pageable);
+    }
+
+    @Override
+    public Page<Document> filterDocuments(String search, int page, int size, List<String> sortParams) {
+        logger.info("Executing document filter by search expression: {}, page: {}, size: {}", search, page, size);
+        return documentDao.filter(search, page, size, sortParams);
     }
 
     /**

@@ -781,6 +781,391 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "5. Document Filter & Pagination (HibernateDao)",
+			"item": [
+				{
+					"name": "1. Get All Documents (Default HibernateDao Paging & Sort)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Filter by Document Name (LIKE search)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?search=name:Project",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name:Project",
+									"description": "Tim kiem tai lieu co ten chua 'Project'"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Filter by App ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?search=appId:app-001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "appId:app-001",
+									"description": "Loc tai lieu theo appId"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Filter by Version",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?search=version:1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "version:1",
+									"description": "Loc tai lieu co version bang 1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Filter by Creation Time > Date",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?search=creationTime>2026-01-01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "creationTime>2026-01-01",
+									"description": "Loc tai lieu tao sau ngay 2026-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Multi-criteria Filter (Name AND Version)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?search=name:Design,version:2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name:Design,version:2",
+									"description": "Loc tai lieu ten chua Design VA version la 2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Pagination - Page 0, Size 5",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?page=0&size=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8. Sorting - Sort by Name ASC",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?sort=name,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "name,asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "9. Multi-field Sorting (creationTime DESC, name ASC)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?sort=creationTime,desc&sort=name,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "creationTime,desc"
+								},
+								{
+									"key": "sort",
+									"value": "name,asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "10. Combined - Filter + Pagination + Sorting",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?search=name:Report&page=0&size=5&sort=name,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name:Report"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "5"
+								},
+								{
+									"key": "sort",
+									"value": "name,asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "11. Search Alias Endpoint (/api/documents/search)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/search?search=name:Report&page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"search"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name:Report"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "12. Validation Test - Invalid Sort Field (Expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?sort=hackerField,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "hackerField,asc",
+									"description": "Bao loi khi sap xep theo field khong thuoc whitelist"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "13. Validation Test - Invalid Search Field (Expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?search=unsupportedField:val",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "unsupportedField:val",
+									"description": "Bao loi khi tim kiem theo field khong thuoc whitelist"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "14. Validation Test - Invalid Page Size (Expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/filter?size=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "0",
+									"description": "Page size phai tu 1 den 100"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [

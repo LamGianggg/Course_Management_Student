@@ -12,9 +12,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -240,6 +243,14 @@ public class HibernateDao<T> {
                 return LocalDate.parse(valueStr);
             } else if (fieldType == Double.class || fieldType == double.class) {
                 return Double.parseDouble(valueStr);
+            } else if (Date.class.isAssignableFrom(fieldType)) {
+                Date parsed = parseDate(valueStr);
+                if (fieldType == java.sql.Timestamp.class) {
+                    return new java.sql.Timestamp(parsed.getTime());
+                } else if (fieldType == java.sql.Date.class) {
+                    return new java.sql.Date(parsed.getTime());
+                }
+                return parsed;
             }
         } catch (NumberFormatException | DateTimeParseException e) {
             throw new IllegalArgumentException(
@@ -249,10 +260,27 @@ public class HibernateDao<T> {
         return valueStr;
     }
 
+    private static Date parseDate(String valueStr) {
+        try {
+            if (valueStr.contains(" ")) {
+                return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(valueStr);
+            } else if (valueStr.contains("T")) {
+                return Date.from(java.time.Instant.parse(valueStr));
+            } else {
+                return new SimpleDateFormat("yyyy-MM-dd").parse(valueStr);
+            }
+        } catch (ParseException | DateTimeParseException e) {
+            throw new IllegalArgumentException(
+                    "Invalid date value '" + valueStr + "'. Expected format: yyyy-MM-dd or yyyy-MM-dd HH:mm:ss");
+        }
+    }
+
     private static String getExpectedFormat(Class<?> fieldType) {
         if (fieldType == LocalDate.class) return "yyyy-MM-dd";
+        if (fieldType == Date.class) return "yyyy-MM-dd or yyyy-MM-dd HH:mm:ss";
         if (fieldType == Long.class || fieldType == long.class) return "numeric (e.g. 123)";
         if (fieldType == Integer.class || fieldType == int.class) return "integer (e.g. 42)";
+        if (fieldType == Double.class || fieldType == double.class) return "decimal (e.g. 1.0)";
         if (fieldType == Boolean.class || fieldType == boolean.class) return "true/false";
         return fieldType.getSimpleName();
     }

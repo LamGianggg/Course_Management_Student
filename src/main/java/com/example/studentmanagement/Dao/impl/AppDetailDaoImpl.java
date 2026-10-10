@@ -26,7 +26,10 @@ public class AppDetailDaoImpl extends HibernateGenericDao<String, AppDetail> imp
 
     @Override
     public AppDetail save(AppDetail appDetail) {
-        return create(appDetail);
+        if (appDetail.getId() == null || findByPk(appDetail.getId()) == null) {
+            return create(appDetail);
+        }
+        return super.save(appDetail);
     }
 
     @Override

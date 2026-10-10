@@ -1,7 +1,9 @@
 package com.example.studentmanagement.rest;
 
+import com.example.studentmanagement.HibernateDao.HibernateDao;
 import com.example.studentmanagement.constants.CoreConstants;
 import com.example.studentmanagement.dto.ApiResponse;
+import com.example.studentmanagement.dto.PagedResponse;
 import com.example.studentmanagement.entity.Document;
 import com.example.studentmanagement.service.DocumentService;
 import io.swagger.annotations.Api;
@@ -10,6 +12,10 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping({"/api/documents", "/documents"})
@@ -27,6 +34,23 @@ import java.util.Map;
 public class DocumentController {
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentController.class);
+
+    /**
+     * Whitelist of fields that clients are allowed to sort by for Document.
+     */
+    public static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "id", "name", "appId", "owner", "version", "creationTime", "modificationTime", "active", "deleted"
+    );
+
+    /**
+     * Whitelist of fields that clients are allowed to search by for Document.
+     */
+    public static final Set<String> ALLOWED_SEARCH_FIELDS = Set.of(
+            "id", "name", "appId", "owner", "path", "version", "deleted", "active", "creationTime"
+    );
+
+    public static final String DEFAULT_SORT_FIELD = "creationTime";
+    public static final Sort.Direction DEFAULT_SORT_DIRECTION = Sort.Direction.DESC;
 
     private final DocumentService documentService;
 
@@ -135,5 +159,61 @@ public class DocumentController {
     public ResponseEntity<ApiResponse<List<Document>>> getAllActive() {
         List<Document> documents = documentService.getAllActive();
         return ResponseEntity.ok(ApiResponse.ok("All active documents retrieved successfully", documents));
+    }
+
+    /**
+     * Advanced filter, search, pagination, and sorting endpoint for documents.
+     * Uses unified HibernateDao helper for Specification parsing, bounds validation, and sorting.
+     *
+     * Search syntax: field{operator}value (operators: :, >, <, !), comma-separated for AND.
+     * Allowed search fields: id, name, appId, owner, path, version, deleted, active, creationTime
+     *
+     * Pagination: page (0-based, default 0), size (default 10, between 1 and 100)
+     * Sorting: sort=field,direction (e.g. sort=creationTime,desc or sort=name,asc). Default: creationTime,desc
+     * Allowed sort fields: id, name, appId, owner, version, creationTime, modificationTime, active, deleted
+     *
+     * Examples:
+     *   GET /api/documents/filter?search=name:report&page=0&size=10
+     *   GET /api/documents/filter?search=appId:APP001,active:true&sort=creationTime,desc
+     *   GET /api/documents/filter?search=version>1.0&page=0&size=5&sort=name,asc
+     *   GET /api/documents/filter?page=0&size=10&sort=creationTime,desc (no search = all documents)
+     */
+    @GetMapping("/filter")
+    @ApiOperation(value = "Filter documents with dynamic search, pagination, and sorting")
+    public ResponseEntity<ApiResponse<PagedResponse<Document>>> filterDocuments(
+            @ApiParam(value = "Search expression (e.g. name:report,appId:APP001)")
+            @RequestParam(required = false) String search,
+            @ApiParam(value = "Page index (0-based)", defaultValue = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @ApiParam(value = "Page size (1-100)", defaultValue = "10")
+            @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "Sort parameters (e.g. creationTime,desc)")
+            @RequestParam(required = false) List<String> sort) {
+
+        logger.info("REST request to filter documents: search='{}', page={}, size={}, sort={}", search, page, size, sort);
+
+        Pageable pageable = HibernateDao.createPageable(page, size, sort, ALLOWED_SORT_FIELDS, DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
+        Specification<Document> spec = HibernateDao.parse(search, ALLOWED_SEARCH_FIELDS);
+        Page<Document> resultPage = documentService.filterDocuments(spec, pageable);
+        PagedResponse<Document> pagedResponse = new PagedResponse<>(resultPage);
+
+        return ResponseEntity.ok(ApiResponse.ok("Documents filtered successfully", pagedResponse));
+    }
+
+    /**
+     * Search documents endpoint alias for convenience.
+     */
+    @GetMapping("/search")
+    @ApiOperation(value = "Search documents with dynamic search, pagination, and sorting")
+    public ResponseEntity<ApiResponse<PagedResponse<Document>>> searchDocuments(
+            @ApiParam(value = "Search expression (e.g. name:report,appId:APP001)")
+            @RequestParam(required = false) String search,
+            @ApiParam(value = "Page index (0-based)", defaultValue = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @ApiParam(value = "Page size (1-100)", defaultValue = "10")
+            @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "Sort parameters (e.g. creationTime,desc)")
+            @RequestParam(required = false) List<String> sort) {
+        return filterDocuments(search, page, size, sort);
     }
 }

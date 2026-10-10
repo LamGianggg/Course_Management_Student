@@ -13,7 +13,6 @@ import java.util.UUID;
 public class Document {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "ID", updatable = false, nullable = false, length = 64)
     private String id;
 

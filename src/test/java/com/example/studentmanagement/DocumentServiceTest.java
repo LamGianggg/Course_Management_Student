@@ -15,6 +15,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
@@ -436,5 +441,46 @@ public class DocumentServiceTest {
                 documentService.delete(request)
         );
         assertEquals(CoreConstants.INVALID_DOCUMENT, ex.getMessage());
+    }
+
+    // =========================================================================
+    // 5. FILTER / PAGINATION / SORTING TESTS (HIBERNATEDAO INTEGRATION)
+    // =========================================================================
+
+    @Test
+    @DisplayName("Filter 1: filterDocuments với Specification và Pageable")
+    void testFilterDocumentsWithSpecAndPageable() {
+        Document doc1 = new Document("doc-1", validAppId, "thesis.pdf", "path1",
+                "user1", 1.0, false, new Date(), new Date(), true);
+        Pageable pageable = PageRequest.of(0, 10);
+        Specification<Document> spec = (root, query, cb) -> cb.conjunction();
+        Page<Document> expectedPage = new PageImpl<>(List.of(doc1), pageable, 1);
+
+        when(documentDao.filter(spec, pageable)).thenReturn(expectedPage);
+
+        Page<Document> actualPage = documentService.filterDocuments(spec, pageable);
+
+        assertNotNull(actualPage);
+        assertEquals(1, actualPage.getTotalElements());
+        assertEquals("thesis.pdf", actualPage.getContent().get(0).getName());
+        verify(documentDao).filter(spec, pageable);
+    }
+
+    @Test
+    @DisplayName("Filter 2: filterDocuments với search expression, page, size, sortParams")
+    void testFilterDocumentsWithSearchParams() {
+        Document doc1 = new Document("doc-1", validAppId, "thesis.pdf", "path1",
+                "user1", 1.0, false, new Date(), new Date(), true);
+        Page<Document> expectedPage = new PageImpl<>(List.of(doc1), PageRequest.of(0, 10), 1);
+
+        when(documentDao.filter("name:thesis", 0, 10, List.of("creationTime,desc")))
+                .thenReturn(expectedPage);
+
+        Page<Document> actualPage = documentService.filterDocuments("name:thesis", 0, 10, List.of("creationTime,desc"));
+
+        assertNotNull(actualPage);
+        assertEquals(1, actualPage.getTotalElements());
+        assertEquals("doc-1", actualPage.getContent().get(0).getId());
+        verify(documentDao).filter("name:thesis", 0, 10, List.of("creationTime,desc"));
     }
 }

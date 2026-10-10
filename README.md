@@ -71,13 +71,23 @@ com.example.studentmanagement/
 ├── specification/
 │   ├── StudentSpecification.java    # Chuyển SearchCriteria thành JPA Criteria Predicate
 │   └── StudentSpecificationBuilder.java # Parser chuỗi truy vấn sang Specification (AND logic)
+├── HibernateDao/
+│   ├── HibernateDao.java            # Unified Engine: parse Specification, validate Pagination bounds & Sort whitelist
+│   ├── HibernateGenericDao.java     # Base Generic DAO với JPA EntityManager operations
+│   └── GenericDao.java              # Generic DAO interface
+├── Dao/
+│   ├── IDocumentDao.java            # Document DAO interface kế thừa JpaSpecificationExecutor & HibernateDao
+│   └── impl/DocumentDaoImpl.java    # Triển khai Document DAO tích hợp HibernateDao<Document>
 ├── repository/
 │   ├── DepartmentRepository.java
 │   └── StudentRepository.java       # Kế thừa JpaRepository & JpaSpecificationExecutor
 ├── service/
+│   ├── DocumentService.java
+│   ├── impl/DocumentServiceImpl.java# Nghiệp vụ tài liệu tích hợp filterDocuments qua HibernateDao
 │   ├── StudentService.java
 │   └── impl/StudentServiceImpl.java # Thực thi truy vấn động ở database-level
 └── rest/
+    ├── DocumentController.java      # Endpoints /api/documents/filter, /search, upload, download, delete
     ├── StudentController.java       # Endpoint GET /api/students/filter
     └── DepartmentController.java
 ```
@@ -151,6 +161,37 @@ com.example.studentmanagement/
 | `PUT` | `/api/departments/{id}` | Cập nhật khoa |
 | `DELETE` | `/api/departments/{id}` | Xóa khoa |
 
+### 4.4. Quản lý Tài liệu (Documents) Tích hợp HibernateDao
+| Method | Endpoint | Query Parameters | Mô tả |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/documents/filter` | `search`, `page`, `size`, `sort` | Lọc động Specification, phân trang & sắp xếp qua HibernateDao |
+| `GET` | `/api/documents/search` | `search`, `page`, `size`, `sort` | Endpoint alias tương đương của `/api/documents/filter` |
+| `POST` | `/api/documents` | Multipart `files`, `appId` | Tải lên một hoặc nhiều tài liệu gắn với appId |
+| `GET` | `/api/documents/{id}` | Path variable `id` | Lấy thông tin metadata tài liệu |
+| `GET` | `/api/documents/{id}/download` | Path variable `id` | Tải về file vật lý của tài liệu |
+| `DELETE` | `/api/documents/{id}` | Path variable `id` | Xóa mềm tài liệu (active = false, deleted = true) |
+
+**Cấu hình bảo mật & Whitelist cho Document:**
+- **Trường tìm kiếm cho phép (`search`)**: `id`, `name`, `appId`, `owner`, `path`, `version`, `deleted`, `active`, `creationTime`
+- **Trường sắp xếp cho phép (`sort`)**: `id`, `name`, `appId`, `owner`, `version`, `creationTime`, `modificationTime`, `active`, `deleted`
+- **Hành vi mặc định**: Sắp xếp `creationTime` giảm dần (`DESC`), `page = 0`, `size = 10`.
+
+**Ví dụ các URL mẫu cho Tài liệu:**
+- **Tìm kiếm theo tên tài liệu**:
+  `GET /api/documents/filter?search=name:Project`
+- **Lọc theo mã ứng dụng (appId)**:
+  `GET /api/documents/filter?search=appId:app-001`
+- **Lọc theo phiên bản (version)**:
+  `GET /api/documents/filter?search=version:1`
+- **Lọc theo ngày tạo (creationTime)**:
+  `GET /api/documents/filter?search=creationTime>2026-01-01`
+- **Kết hợp nhiều điều kiện AND**:
+  `GET /api/documents/filter?search=name:Design,version:2`
+- **Phân trang & sắp xếp**:
+  `GET /api/documents/filter?page=0&size=5&sort=name,asc`
+- **Sắp xếp đa trường**:
+  `GET /api/documents/filter?sort=creationTime,desc&sort=name,asc`
+
 ---
 
 ## 5. Hướng dẫn Khởi chạy Dự án
@@ -173,7 +214,7 @@ com.example.studentmanagement/
 4. Nhấn chuột phải -> Chọn **Run 'StudentManagementApplication'**.
 
 ### 5.3. Chạy Kiểm thử Tự động (Tests)
-Chạy toàn bộ 37 test case (bao gồm 33 test case cho Specification, Pagination, Sorting):
+Chạy toàn bộ 77 test case (bao gồm HibernateDao, Document Filter/Pagination/Sorting, Student Specification & Controller tests):
 ```bash
 mvn test
 ```
@@ -222,7 +263,27 @@ Thư mục này gồm **14 request mẫu được cấu hình sẵn 100%**, bao 
 | **13** | `13. Validation Test - Invalid Sort` | Kiểm tra bảo mật trường sắp xếp | `?sort=unknownField,asc` | `400 Bad Request` thông báo sort field không hợp lệ |
 | **14** | `14. Validation Test - Invalid Size` | Kiểm tra giới hạn kích thước trang | `?size=0` | `400 Bad Request` thông báo page size phải từ 1-100 |
 
-### Bước 5: Xem định dạng kết quả trả về trong Postman
+### Bước 5: Kiểm thử thư mục `5. Document Filter & Pagination (HibernateDao)`
+Thư mục này gồm **14 request mẫu được cấu hình sẵn 100% cho Document**, bao gồm:
+
+| STT | Tên Request trong Postman | Mục đích kiểm thử | Query String mẫu | Kết quả mong đợi |
+| :---: | :--- | :--- | :--- | :--- |
+| **1** | `1. Get All Documents` | Lấy danh sách tài liệu với phân trang mặc định | (none) | Danh sách sắp xếp `creationTime DESC`, `size: 10` |
+| **2** | `2. Filter by Document Name` | Tìm kiếm tên tài liệu (LIKE) | `?search=name:Project` | Các tài liệu có tên chứa "Project" |
+| **3** | `3. Filter by App ID` | Lọc theo mã ứng dụng | `?search=appId:app-001` | Các tài liệu thuộc appId chỉ định |
+| **4** | `4. Filter by Version` | Lọc theo phiên bản tài liệu | `?search=version:1` | Các tài liệu có version bằng 1 |
+| **5** | `5. Filter by Creation Time > Date` | Lọc tài liệu tạo sau ngày | `?search=creationTime>2026-01-01` | Tài liệu có ngày tạo > 2026-01-01 |
+| **6** | `6. Multi-criteria Filter` | Kết hợp nhiều điều kiện AND | `?search=name:Design,version:2` | Tên chứa "Design" và version = 2 |
+| **7** | `7. Pagination - Page 0, Size 5` | Phân trang trang đầu | `?page=0&size=5` | Tối đa 5 tài liệu, `page: 0`, `first: true` |
+| **8** | `8. Sorting - Sort by Name ASC` | Sắp xếp tên tài liệu tăng dần | `?sort=name,asc` | Sắp xếp A-Z theo `name` |
+| **9** | `9. Multi-field Sorting` | Sắp xếp nhiều trường cùng lúc | `?sort=creationTime,desc&sort=name,asc` | Ưu tiên ngày tạo giảm dần, rồi đến tên |
+| **10** | `10. Combined - All Features` | Kết hợp Lọc + Phân trang + Sắp xếp | `?search=name:Report&page=0&size=5&sort=name,asc` | Lọc theo tên, phân trang 5 bản ghi, xếp A-Z |
+| **11** | `11. Search Alias Endpoint` | Kiểm thử endpoint alias `/api/documents/search` | `?search=name:Report&page=0&size=10` | Hoạt động giống `/api/documents/filter` |
+| **12** | `12. Validation Test - Invalid Sort` | Kiểm tra bảo mật sort whitelist | `?sort=hackerField,asc` | `400 Bad Request` thông báo sort field không hợp lệ |
+| **13** | `13. Validation Test - Invalid Search` | Kiểm tra bảo mật search whitelist | `?search=unsupportedField:val` | `400 Bad Request` thông báo search field không hợp lệ |
+| **14** | `14. Validation Test - Invalid Size` | Kiểm tra giới hạn kích thước trang | `?size=0` | `400 Bad Request` thông báo page size phải từ 1-100 |
+
+### Bước 6: Xem định dạng kết quả trả về trong Postman
 Mỗi request thành công đều trả về JSON chuẩn theo khuôn mẫu sau:
 ```json
 {

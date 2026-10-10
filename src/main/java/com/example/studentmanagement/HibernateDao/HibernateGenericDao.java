@@ -32,7 +32,8 @@ public class HibernateGenericDao<Pk, Entity>
                     "Cannot create null entity[" + getType().getName() + "]"
             );
         } else {
-            return save(anEntity);
+            entityManager.persist(anEntity);
+            return anEntity;
         }
     }
 

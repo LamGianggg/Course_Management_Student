@@ -1,314 +1,251 @@
-# Dự án Quản lý Sinh viên & Khoa (Course & Student Management System)
+# Hệ Thống Quản Lý Đào Tạo & Sinh Viên (Course & Student Management System)
 
-Dự án REST API được xây dựng bằng **Java 17**, **Spring Boot 3.5.3**, **Spring Data JPA**, cơ sở dữ liệu **MySQL 8.x**. Dự án đã được triển khai và hoàn thiện đầy đủ 3 tính năng cốt lõi theo chuẩn Spring Data:
-1. **REST Query Language with Spring Data JPA Specifications**
-2. **Pagination using Spring Data JPA**
-3. **Sorting Query Results with Spring Data**
-
-Đồng thời đi kèm sẵn file **Postman Collection v2.1** hoàn chỉnh để kiểm thử trực quan tất cả các kịch bản.
-
----
-
-## 1. Công nghệ & Môi trường sử dụng
-
-| Công nghệ | Phiên bản | Ghi chú |
-| :--- | :--- | :--- |
-| **Java** | OpenJDK 17 (LTS) | Biên dịch & tương thích tốt nhất |
-| **Spring Boot** | 3.5.3 | Quản lý dependency & REST Web services |
-| **Spring Data JPA** | Hibernate 6.6.x | ORM & dynamic query execution |
-| **Database** | MySQL 8.x | Cơ sở dữ liệu quan hệ lưu trữ dữ liệu |
-| **Build Tool** | Apache Maven 3.9+ | Quản lý vòng đời build & dependencies |
-| **Testing** | JUnit 5 & Spring MockMvc | Kiểm thử tự động tầng Service, Repo & Web |
-| **API Testing Tool** | Postman Collection v2.1 | Cung cấp sẵn các request mẫu |
+> Dự án RESTful API hoàn chỉnh được phát triển bằng **Java 17**, **Spring Boot 3.5.3**, **Spring Security 6**, **JWT (JSON Web Token)**, **Spring Data JPA / Hibernate 6.6**, cơ sở dữ liệu **MySQL 8.x**.
+> 
+> Dự án đã hoàn thành trọn vẹn 2 nhiệm vụ cốt lõi theo yêu cầu:
+> 1. **Kế thừa & áp dụng toàn diện Unified `HibernateDao<T>`** cho tất cả các đối tượng trong hệ thống (`Student`, `Department`, `ClassInfo`, `Document`, `AppDetail`), chuẩn hóa công cụ lọc động (Dynamic Specification Parser), phân trang an toàn (Pagination Bounds) và bảo vệ sắp xếp (Sort Whitelist).
+> 2. **Hệ thống Bảo mật & Phân quyền chuẩn Doanh nghiệp (Role-Based Access Control - RBAC)** tích hợp Spring Security Stateless + JWT Bearer Token, kiểm soát truy cập đa tầng (URL Security FilterChain + Method Security `@PreAuthorize`) với 3 vai trò: `ROLE_ADMIN`, `ROLE_LECTURER`, `ROLE_STUDENT`.
 
 ---
 
-## 2. Cấu trúc Database & Cấu hình kết nối
-
-### 2.1. Cấu hình `src/main/resources/application.properties`
-```properties
-server.port=8080
-
-# Cấu hình kết nối MySQL
-spring.datasource.url=jdbc:mysql://localhost:3306/educaze?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
-spring.datasource.username=root
-spring.datasource.password=123456
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-
-# JPA & Hibernate
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-```
-
-> **Lưu ý**: Trước khi chạy ứng dụng lần đầu, hãy đảm bảo MySQL Service đã bật và database `educaze` đã được tạo (nếu chưa, mở MySQL CLI chạy `CREATE DATABASE IF NOT EXISTS educaze;`).
-
-### 2.2. Database Schema chính
-- **Bảng `departments`**:
-  - `id` (BIGINT, Primary Key, Auto Increment)
-  - `name` (VARCHAR, Tên khoa)
-  - `description` (VARCHAR, Mô tả)
-- **Bảng `students`**:
-  - `id` (BIGINT, Primary Key, Auto Increment)
-  - `name` (VARCHAR, Họ và tên)
-  - `dob` (DATE, Ngày sinh)
-  - `department_id` (BIGINT, Foreign Key liên kết `departments.id`)
-
----
-
-## 3. Kiến trúc Triển khai 3 Tính Năng Cốt Lõi
-
-Dự án áp dụng mô hình phân lớp chuẩn công nghiệp (Clean Architecture):
+## 1. Tổng Quan Kiến Trúc Hệ Thống
 
 ```
 com.example.studentmanagement/
+├── config/
+│   └── DataInitializer.java           # Khởi tạo sẵn tài khoản Admin, Giảng viên, Sinh viên
 ├── dto/
-│   ├── ApiResponse.java             # Chuẩn wrapper response JSON đồng nhất
-│   ├── PagedResponse.java           # DTO metadata phân trang (content, page, totalPages,...)
-│   └── SearchCriteria.java          # Model chứa điều kiện lọc (key, operation, value)
+│   ├── ApiResponse.java               # Chuẩn wrapper JSON response thống nhất toàn hệ thống
+│   ├── PagedResponse.java             # Metadata phân trang (content, page, size, totalPages,...)
+│   ├── SearchCriteria.java            # Cấu trúc tiêu chí tìm kiếm (key, operation, value)
+│   ├── LoginRequest.java              # Request đăng nhập
+│   ├── RegisterRequest.java           # Request đăng ký tài khoản
+│   ├── JwtResponse.java               # Response chứa token JWT và thông tin roles
+│   └── UserDto.java                   # DTO người dùng & danh sách quyền
 ├── entity/
-│   ├── Department.java              # Entity Khoa
-│   └── Student.java                 # Entity Sinh viên (chứa các Named Query)
-├── specification/
-│   ├── StudentSpecification.java    # Chuyển SearchCriteria thành JPA Criteria Predicate
-│   └── StudentSpecificationBuilder.java # Parser chuỗi truy vấn sang Specification (AND logic)
+│   ├── RoleType.java                  # Enum quyền: ROLE_ADMIN, ROLE_LECTURER, ROLE_STUDENT
+│   ├── User.java                      # Entity người dùng (username, password BCrypt, email, enabled, roles)
+│   ├── Student.java                   # Entity Sinh viên & các Named Query
+│   ├── Department.java                # Entity Khoa đào tạo
+│   ├── ClassInfo.java                 # Entity Lớp học
+│   ├── Document.java                  # Entity Tài liệu đính kèm
+│   └── AppDetail.java                 # Entity Chi tiết ứng dụng
 ├── HibernateDao/
-│   ├── HibernateDao.java            # Unified Engine: parse Specification, validate Pagination bounds & Sort whitelist
-│   ├── HibernateGenericDao.java     # Base Generic DAO với JPA EntityManager operations
-│   └── GenericDao.java              # Generic DAO interface
+│   ├── HibernateDao.java              # CỐT LÕI: Engine lọc động, phân trang, sort whitelist
+│   ├── IGenericDao.java               # Interface Generic DAO mở rộng với filter & getHibernateDao
+│   ├── HibernateGenericDao.java       # Base Generic DAO tích hợp EntityManager & HibernateDao
+│   ├── StudentHibernateDao.java       # Kế thừa HibernateDao<Student> (whitelist: name, dob, department.name)
+│   ├── DepartmentHibernateDao.java    # Kế thừa HibernateDao<Department> (whitelist: name, description)
+│   ├── ClassInfoHibernateDao.java     # Kế thừa HibernateDao<ClassInfo> (whitelist: id, name, description)
+│   ├── DocumentHibernateDao.java      # Kế thừa HibernateDao<Document> (whitelist: name, appId, owner,...)
+│   └── AppDetailHibernateDao.java     # Kế thừa HibernateDao<AppDetail> (whitelist: appId, appName,...)
 ├── Dao/
-│   ├── IDocumentDao.java            # Document DAO interface kế thừa JpaSpecificationExecutor & HibernateDao
-│   └── impl/DocumentDaoImpl.java    # Triển khai Document DAO tích hợp HibernateDao<Document>
+│   ├── IStudentDao.java & impl/StudentDaoImpl.java
+│   ├── IDepartmentDao.java & impl/DepartmentDaoImpl.java
+│   ├── IClassInfoDao.java & impl/ClassInfoDaoImpl.java
+│   ├── IDocumentDao.java & impl/DocumentDaoImpl.java
+│   └── IAppDetailDao.java & impl/AppDetailDaoImpl.java
 ├── repository/
-│   ├── DepartmentRepository.java
-│   └── StudentRepository.java       # Kế thừa JpaRepository & JpaSpecificationExecutor
+│   ├── UserRepository.java            # Spring Data JPA Repository quản lý tài khoản User
+│   ├── StudentRepository.java         # JpaRepository & JpaSpecificationExecutor
+│   └── DepartmentRepository.java
+├── security/
+│   ├── WebSecurityConfig.java         # Cấu hình SecurityFilterChain, BCrypt, Stateless, CORS, MethodSecurity
+│   ├── jwt/
+│   │   ├── JwtUtils.java              # Tạo, ký số và thẩm định tính hợp lệ của JWT token
+│   │   ├── AuthTokenFilter.java       # Filter chặn mỗi request để trích xuất Bearer Token
+│   │   ├── AuthEntryPointJwt.java     # Xử lý phản hồi lỗi 401 Unauthorized theo chuẩn ApiResponse
+│   │   └── CustomAccessDeniedHandler.java # Xử lý phản hồi lỗi 403 Forbidden theo chuẩn ApiResponse
+│   └── service/
+│       ├── UserDetailsImpl.java       # Chuyển đổi User Entity sang Spring Security UserDetails
+│       └── UserDetailsServiceImpl.java# Nạp thông tin người dùng từ UserRepository
 ├── service/
-│   ├── DocumentService.java
-│   ├── impl/DocumentServiceImpl.java# Nghiệp vụ tài liệu tích hợp filterDocuments qua HibernateDao
-│   ├── StudentService.java
-│   └── impl/StudentServiceImpl.java # Thực thi truy vấn động ở database-level
+│   ├── StudentService.java & impl/StudentServiceImpl.java
+│   ├── DepartmentService.java & impl/DepartmentServiceImpl.java
+│   ├── ClassInfoService.java & impl/ClassInfoServiceImpl.java
+│   ├── DocumentService.java & impl/DocumentServiceImpl.java
+│   └── AppDetailService.java & impl/AppDetailServiceImpl.java
 └── rest/
-    ├── DocumentController.java      # Endpoints /api/documents/filter, /search, upload, download, delete
-    ├── StudentController.java       # Endpoint GET /api/students/filter
-    └── DepartmentController.java
+    ├── AuthController.java            # /api/auth/login, /api/auth/register, /api/auth/me
+    ├── AdminController.java           # /api/admin/users, /roles, /status (chỉ ROLE_ADMIN)
+    ├── StudentController.java         # CRUD & /api/students/filter
+    ├── DepartmentController.java      # CRUD & /api/departments/filter, /search
+    ├── ClassInfoRestImpl.java         # CRUD & /api/class-info/filter
+    └── DocumentController.java        # Upload, Download, Delete & /api/documents/filter, /search
 ```
 
-### 3.1. REST Query Language với JPA Specification
-- **File thành phần**: `SearchCriteria.java`, `StudentSpecification.java`, `StudentSpecificationBuilder.java`.
-- **Cơ chế hoạt động**:
-  - `key:value` : Tìm kiếm chuỗi có chứa từ khóa (LIKE `%value%`, không phân biệt hoa thường).
-  - `key>value` : Lớn hơn (áp dụng cho ngày tháng `LocalDate`, số `Long`).
-  - `key<value` : Nhỏ hơn.
-  - `key!value` : Phép so sánh khác (Not Equal).
-  - Dấu phẩy `,` liên kết các điều kiện bằng logic `AND`.
-  - Hỗ trợ **Join Specification**: `department.name:CNTT` lọc theo tên khoa thông qua quan hệ bảng.
-  - **Bảo mật Whitelist**: Chỉ cho phép tìm kiếm trên các trường hợp lệ (`name`, `dob`, `department.name`), tránh injection.
+---
 
-### 3.2. Phân trang (Pagination)
-- **File thành phần**: `PagedResponse.java`, `Pageable`, `PageRequest.of(page, size, sort)`.
-- **Tham số**:
-  - `page`: Số trang (0-indexed, mặc định: 0).
-  - `size`: Kích thước trang (mặc định: 10, giới hạn từ 1 đến 100).
-- **Metadata trả về**: `page`, `size`, `totalElements`, `totalPages`, `first`, `last`, `content`.
+## 2. Nhiệm Vụ 1: Kế Thừa & Ứng Dụng Toàn Diện `HibernateDao<T>`
 
-### 3.3. Sắp xếp (Sorting)
-- **Cơ chế**: Sử dụng Spring Data `Sort.by(...)` với danh sách `Sort.Order`.
-- **Cú pháp hỗ trợ linh hoạt**:
-  - Đơn tiêu chí: `sort=name,asc` hoặc `sort=dob,desc`.
-  - Đa tiêu chí: `sort=name,asc&sort=dob,desc`.
-  - **Bảo mật Whitelist**: Chỉ cho phép sắp xếp theo `id`, `name`, `dob`. Báo lỗi `400 Bad Request` nếu truyền trường lạ.
+Lớp `com.example.studentmanagement.HibernateDao.HibernateDao` cung cấp giải pháp thống nhất toàn diện:
+- **Parse điều kiện lọc động**: Hỗ trợ cú pháp tìm kiếm linh hoạt `key:value` (LIKE), `key>value` (Lớn hơn), `key<value` (Nhỏ hơn), `key!value` (Khác), liên kết nhiều tiêu chí bằng dấu phẩy `,` (AND logic), hỗ trợ liên kết bảng (Join Specification như `department.name:CNTT`).
+- **Kiểm soát phân trang (Pagination Bounds)**: Giới hạn số trang hợp lệ (`page >= 0`), kích thước trang (`1 <= size <= 100`, chống tấn công quá tải bộ nhớ).
+- **Bảo mật sắp xếp (Sort Whitelist)**: Chỉ cho phép sắp xếp theo danh sách các trường được khai báo whitelist cụ thể trên từng Entity, chặn hoàn toàn nguy cơ SQL / Property Injection.
+
+### 2.1. Cấu trúc kế thừa trực tiếp:
+Các lớp con kế thừa `HibernateDao<T>` và đăng ký làm Spring Service/Component:
+- **`StudentHibernateDao extends HibernateDao<Student>`**:
+  - Whitelist Search: `id`, `name`, `dob`, `department.name`
+  - Whitelist Sort: `id`, `name`, `dob`
+- **`DepartmentHibernateDao extends HibernateDao<Department>`**:
+  - Whitelist Search: `id`, `name`, `description`
+  - Whitelist Sort: `id`, `name`, `description`
+- **`ClassInfoHibernateDao extends HibernateDao<ClassInfo>`**:
+  - Whitelist Search: `id`, `name`, `description`
+  - Whitelist Sort: `id`, `name`
+- **`DocumentHibernateDao extends HibernateDao<Document>`**:
+  - Whitelist Search: `id`, `name`, `appId`, `owner`, `path`, `version`, `deleted`, `active`, `creationTime`
+  - Whitelist Sort: `id`, `name`, `appId`, `owner`, `version`, `creationTime`, `modificationTime`, `active`, `deleted`
+- **`AppDetailHibernateDao extends HibernateDao<AppDetail>`**:
+  - Whitelist Search: `id`, `appId`, `appName`, `description`
+  - Whitelist Sort: `id`, `appId`, `appName`
+
+### 2.2. Tích hợp Generic DAO:
+Interface `IGenericDao<T, ID>` và lớp triển khai `HibernateGenericDao<T, ID>` được mở rộng thêm các hàm:
+- `PagedResponse<T> filter(String search, Integer page, Integer size, List<String> sortParams)`
+- `PagedResponse<T> filter(Specification<T> spec, Pageable pageable)`
+- `HibernateDao<T> getHibernateDao()`
+
+Nhờ đó, tất cả các DAO (`StudentDaoImpl`, `DepartmentDaoImpl`, `ClassInfoDaoImpl`, `DocumentDaoImpl`, `AppDetailDaoImpl`) đều có thể tận dụng engine lọc động thống nhất này.
 
 ---
 
-## 4. Danh sách REST API Endpoints
+## 3. Nhiệm Vụ 2: Hệ Thống Phân Quyền Toàn Diện (RBAC + JWT)
 
-### 4.1. Endpoint Bộ Lọc Động, Phân Trang & Sắp Xếp (Trọng tâm)
-| Method | Endpoint | Query Parameters | Mô tả |
+Dự án thiết lập hệ thống bảo mật theo mô hình **Stateless Security** dựa trên **JSON Web Token (JWT)** và thuật toán mã hóa mật khẩu một chiều **BCrypt**.
+
+### 3.1. Các vai trò trong hệ thống (Roles)
+1. **`ROLE_ADMIN` (Quản trị viên)**:
+   - Toàn quyền quản trị hệ thống.
+   - Quản lý tài khoản người dùng và phân quyền (`/api/admin/**`).
+   - Thêm, sửa, xóa Khoa đào tạo (`POST`, `PUT`, `DELETE` `/api/departments/**`).
+   - Xóa sinh viên (`DELETE /api/students/{id}`).
+   - Xóa tài liệu (`DELETE /api/documents/{id}`).
+2. **`ROLE_LECTURER` (Giảng viên)**:
+   - Thêm mới và cập nhật hồ sơ sinh viên (`POST`, `PUT` `/api/students/**`).
+   - Tải lên tài liệu giảng dạy (`POST /api/documents`).
+   - Xem, tìm kiếm và tải về tài liệu giảng dạy.
+   - Không được phân quyền người dùng, không được xóa sinh viên hoặc thay đổi cơ cấu khoa.
+3. **`ROLE_STUDENT` (Sinh viên)**:
+   - Tra cứu danh sách, xem chi tiết sinh viên, khoa, lớp học.
+   - Tìm kiếm, lọc động và tải về tài liệu học tập (`GET /api/documents/**`, `/download`).
+   - Xem hồ sơ cá nhân (`GET /api/auth/me`).
+   - Không được thực hiện các thao tác ghi dữ liệu (POST, PUT, DELETE).
+
+### 3.2. Ma trận phân quyền chi tiết (RBAC Matrix)
+
+| Endpoint | Method | Vai trò được phép | Ghi chú |
+| :--- | :---: | :--- | :--- |
+| `/api/auth/login` | `POST` | Tất cả (Public) | Đăng nhập nhận JWT Token |
+| `/api/auth/register` | `POST` | Tất cả (Public) | Đăng ký tài khoản mới |
+| `/api/auth/me` | `GET` | `ADMIN`, `LECTURER`, `STUDENT` | Lấy thông tin tài khoản hiện tại |
+| `/api/admin/**` | `GET`, `PUT` | `ROLE_ADMIN` | Quản lý danh sách User, cấp Role, bật/tắt kích hoạt |
+| `/api/departments` (Tạo, Sửa, Xóa) | `POST`, `PUT`, `DELETE` | `ROLE_ADMIN` | Chỉ Admin được sửa đổi cơ cấu khoa |
+| `/api/students` (Thêm, Sửa) | `POST`, `PUT` | `ADMIN`, `LECTURER` | Giảng viên & Admin được thêm/sửa sinh viên |
+| `/api/students/{id}` (Xóa) | `DELETE` | `ROLE_ADMIN` | Chỉ Admin được phép xóa sinh viên |
+| `/api/documents` (Tải lên) | `POST` | `ADMIN`, `LECTURER` | Đăng tải tài liệu giảng dạy/hồ sơ |
+| `/api/documents/{id}` (Xóa) | `DELETE` | `ROLE_ADMIN` | Chỉ Admin được xóa tài liệu |
+| Tra cứu (`/filter`, `/search`, `GET`) | `GET` | Công khai / Toàn bộ Roles | Xem, tìm kiếm, lọc động, tải tài liệu |
+
+### 3.3. Tài khoản demo được tạo sẵn tự động:
+Hệ thống sử dụng `DataInitializer.java` tự động khởi tạo 3 tài khoản mẫu ngay khi ứng dụng chạy:
+
+| Tên đăng nhập (Username) | Mật khẩu (Password) | Vai trò (Role) | Mục đích demo |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/students/filter` | `search`, `page`, `size`, `sort` | Lọc động theo Specification, phân trang và sắp xếp kết quả |
-
-**Ví dụ các URL mẫu:**
-- **Tìm kiếm theo tên**:
-  `GET /api/students/filter?search=name:Nguyen`
-- **Lọc sinh viên sinh sau ngày chỉ định**:
-  `GET /api/students/filter?search=dob>2003-01-01`
-- **Lọc kết hợp nhiều điều kiện (AND)**:
-  `GET /api/students/filter?search=name:Van,dob>2002-01-01`
-- **Lọc theo tên Khoa (Join Specification)**:
-  `GET /api/students/filter?search=department.name:Computer`
-- **Phân trang trang 0, lấy 5 bản ghi**:
-  `GET /api/students/filter?page=0&size=5`
-- **Sắp xếp theo tên tăng dần**:
-  `GET /api/students/filter?sort=name,asc`
-- **Kết hợp đồng thời Tìm kiếm + Phân trang + Sắp xếp**:
-  `GET /api/students/filter?search=dob>2002-01-01&page=0&size=5&sort=name,asc`
-
-### 4.2. Quản lý Sinh viên cơ bản (CRUD)
-| Method | Endpoint | Mô tả |
-| :--- | :--- | :--- |
-| `GET` | `/api/students` | Lấy toàn bộ danh sách sinh viên |
-| `GET` | `/api/students/{id}` | Lấy chi tiết sinh viên theo ID |
-| `POST` | `/api/students` | Thêm mới sinh viên |
-| `PUT` | `/api/students/{id}` | Cập nhật thông tin sinh viên |
-| `DELETE` | `/api/students/{id}` | Xóa sinh viên |
-| `GET` | `/api/students/department/{deptId}` | Lấy danh sách sinh viên theo Khoa |
-
-### 4.3. Quản lý Khoa (Departments)
-| Method | Endpoint | Mô tả |
-| :--- | :--- | :--- |
-| `GET` | `/api/departments` | Lấy tất cả các khoa |
-| `GET` | `/api/departments/{id}` | Lấy thông tin khoa theo ID |
-| `POST` | `/api/departments` | Tạo mới khoa |
-| `PUT` | `/api/departments/{id}` | Cập nhật khoa |
-| `DELETE` | `/api/departments/{id}` | Xóa khoa |
-
-### 4.4. Quản lý Tài liệu (Documents) Tích hợp HibernateDao
-| Method | Endpoint | Query Parameters | Mô tả |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/documents/filter` | `search`, `page`, `size`, `sort` | Lọc động Specification, phân trang & sắp xếp qua HibernateDao |
-| `GET` | `/api/documents/search` | `search`, `page`, `size`, `sort` | Endpoint alias tương đương của `/api/documents/filter` |
-| `POST` | `/api/documents` | Multipart `files`, `appId` | Tải lên một hoặc nhiều tài liệu gắn với appId |
-| `GET` | `/api/documents/{id}` | Path variable `id` | Lấy thông tin metadata tài liệu |
-| `GET` | `/api/documents/{id}/download` | Path variable `id` | Tải về file vật lý của tài liệu |
-| `DELETE` | `/api/documents/{id}` | Path variable `id` | Xóa mềm tài liệu (active = false, deleted = true) |
-
-**Cấu hình bảo mật & Whitelist cho Document:**
-- **Trường tìm kiếm cho phép (`search`)**: `id`, `name`, `appId`, `owner`, `path`, `version`, `deleted`, `active`, `creationTime`
-- **Trường sắp xếp cho phép (`sort`)**: `id`, `name`, `appId`, `owner`, `version`, `creationTime`, `modificationTime`, `active`, `deleted`
-- **Hành vi mặc định**: Sắp xếp `creationTime` giảm dần (`DESC`), `page = 0`, `size = 10`.
-
-**Ví dụ các URL mẫu cho Tài liệu:**
-- **Tìm kiếm theo tên tài liệu**:
-  `GET /api/documents/filter?search=name:Project`
-- **Lọc theo mã ứng dụng (appId)**:
-  `GET /api/documents/filter?search=appId:app-001`
-- **Lọc theo phiên bản (version)**:
-  `GET /api/documents/filter?search=version:1`
-- **Lọc theo ngày tạo (creationTime)**:
-  `GET /api/documents/filter?search=creationTime>2026-01-01`
-- **Kết hợp nhiều điều kiện AND**:
-  `GET /api/documents/filter?search=name:Design,version:2`
-- **Phân trang & sắp xếp**:
-  `GET /api/documents/filter?page=0&size=5&sort=name,asc`
-- **Sắp xếp đa trường**:
-  `GET /api/documents/filter?sort=creationTime,desc&sort=name,asc`
+| **`admin`** | `admin123` | `ROLE_ADMIN` | Test toàn quyền quản trị và phân quyền |
+| **`lecturer`** | `lecturer123` | `ROLE_LECTURER` | Test quyền giảng viên (thêm/sửa sinh viên, upload tài liệu) |
+| **`student`** | `student123` | `ROLE_STUDENT` | Test quyền sinh viên (tra cứu, tải file) |
 
 ---
 
-## 5. Hướng dẫn Khởi chạy Dự án
+## 4. Danh Sách REST API Chi Tiết
 
-### 5.1. Khởi chạy bằng Dòng lệnh (Terminal / PowerShell)
-1. Di chuyển vào thư mục dự án:
-   ```bash
-   cd D:\course-management-system-main
-   ```
-2. Khởi động ứng dụng Spring Boot:
-   ```bash
-   mvn spring-boot:run
-   ```
-3. Ứng dụng sẽ khởi chạy tại: `http://localhost:8080`.
+### 4.1. Xác thực & Tài khoản (`/api/auth/**`)
+- `POST /api/auth/login`: Đăng nhập với username & password, trả về JWT Token và roles.
+- `POST /api/auth/register`: Đăng ký tài khoản người dùng mới.
+- `GET /api/auth/me`: Lấy thông tin user đăng nhập từ JWT Token (yêu cầu Header: `Authorization: Bearer <token>`).
 
-### 5.2. Khởi chạy bằng IntelliJ IDEA / Eclipse
-1. Mở IDE -> Chọn **Open** -> Trỏ tới thư mục `D:\course-management-system-main`.
-2. Chờ Maven tải và đồng bộ xong các thư viện.
-3. Tìm đến file `src/main/java/com/example/studentmanagement/StudentManagementApplication.java`.
-4. Nhấn chuột phải -> Chọn **Run 'StudentManagementApplication'**.
+### 4.2. Quản trị Phân quyền (`/api/admin/**` - Yêu cầu `ROLE_ADMIN`)
+- `GET /api/admin/users`: Lấy danh sách toàn bộ người dùng trong hệ thống kèm vai trò và trạng thái.
+- `PUT /api/admin/users/{id}/roles`: Cập nhật vai trò cho người dùng (Body: `["ROLE_ADMIN", "ROLE_LECTURER"]`).
+- `PUT /api/admin/users/{id}/status?enabled=true`: Kích hoạt hoặc khóa tài khoản người dùng.
 
-### 5.3. Chạy Kiểm thử Tự động (Tests)
-Chạy toàn bộ 77 test case (bao gồm HibernateDao, Document Filter/Pagination/Sorting, Student Specification & Controller tests):
+### 4.3. Lọc động, Phân trang & Sắp xếp với `HibernateDao`
+- **Sinh viên**:
+  - `GET /api/students/filter?search=name:Nguyen,dob>2002-01-01&page=0&size=10&sort=name,asc`
+  - `GET /api/students/filter?search=department.name:Computer` (Join Specification)
+- **Khoa**:
+  - `GET /api/departments/filter?search=name:Tech&page=0&size=10&sort=name,asc`
+  - `GET /api/departments/search?search=name:Tech` (Alias)
+- **Lớp học**:
+  - `GET /api/class-info/filter?search=name:Java&page=0&size=10&sort=id,asc`
+- **Tài liệu**:
+  - `GET /api/documents/filter?search=name:Report,version:1&page=0&size=10&sort=creationTime,desc`
+  - `GET /api/documents/search?search=appId:app-001` (Alias)
+
+---
+
+## 5. Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
+
+### 5.1. Yêu cầu môi trường
+- **Java**: JDK 17 trở lên (`java -version`).
+- **Maven**: 3.8+ (`mvn -version`).
+- **MySQL**: 8.0+ đang chạy tại cổng `3306` (database `educaze`, user `root`, password `123456`).
+
+### 5.2. Chạy ứng dụng
+```bash
+# Di chuyển vào thư mục dự án
+cd D:\course-management-system-main
+
+# Chạy ứng dụng qua Spring Boot Maven Plugin
+mvn spring-boot:run
+```
+Ứng dụng sẽ khởi chạy tại: `http://localhost:8080`.
+
+### 5.3. Chạy toàn bộ 199 Unit & Integration Tests
+Dự án được bảo vệ bởi **199 bài kiểm thử tự động**, bao gồm đầy đủ các kịch bản kiểm tra kế thừa `HibernateDao`, JWT, Spring Security RBAC và REST Controllers:
 ```bash
 mvn test
 ```
+**Kết quả cam kết:**
+```
+[INFO] Results:
+[INFO] Tests run: 199, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
 
 ---
 
-## 6. Hướng dẫn Kiểm thử Chi tiết bằng Postman (Step-by-step)
+## 6. Hướng Dẫn Kiểm Thử Bằng Postman Collection
 
-File Postman Collection được chuẩn bị sẵn tại thư mục gốc của dự án:
-📁 **`Student_Management_System.postman_collection.json`**
+Toàn bộ các API và kịch bản kiểm thử tự động đã được tích hợp đầy đủ trong **1 file JSON duy nhất**:
+📁 **`Course_Management_System_Complete.postman_collection.json`**
 
-### Bước 1: Import Collection vào Postman
-1. Mở ứng dụng **Postman**.
-2. Nhấn vào nút **Import** (ở góc trên cùng bên trái cạnh logo Postman).
-3. Chọn thẻ **Files** hoặc kéo-thả trực tiếp file `Student_Management_System.postman_collection.json` vào giao diện Postman.
-4. Nhấn **Import** để hoàn tất. Bạn sẽ thấy collection mang tên:
-   **`Student Management System API`**.
+### 6.1. Hướng Dẫn Kiểm Thử Tự Động 100% (1-Click Run - Khuyên dùng khi báo cáo cho Thầy)
+1. Mở phần mềm **Postman**.
+2. Nhấn vào nút **Import** (ở góc trên bên trái) -> Chọn file `Course_Management_System_Complete.postman_collection.json`.
+3. Bạn sẽ thấy Collection: **`Course & Student Management System - Complete API & AutoTest Collection`**.
+4. **Cách chạy tự động toàn bộ hệ thống**:
+   - Nhấn vào tên Collection -> Click vào nút **Run** (biểu tượng Play).
+   - Chọn thư mục **`0. 🚀 AUTO-TEST SUITE (Chạy Tự Động 100% RBAC & HibernateDao)`** (hoặc để mặc định toàn bộ).
+   - Nhấn **Run Course & Student Management System...**.
+5. **Kết quả**:
+   - Postman sẽ tự động gửi tuần tự 24 kịch bản kiểm thử (tự động lấy token JWT, tự kiểm tra quyền 200/403, tự kiểm tra lọc động và validate 400).
+   - Toàn bộ kết quả hiển thị **PASS 100% (Màu xanh)**.
 
-### Bước 2: Kiểm tra biến môi trường `baseUrl`
-- Collection đã cài đặt sẵn biến `baseUrl` = `http://localhost:8080`.
-- Nếu bạn đổi cổng chạy server, bạn có thể click vào Collection `Student Management System API` -> chọn tab **Variables** -> sửa giá trị cột **Current Value** của `baseUrl`.
+---
 
-### Bước 3: Chuẩn bị dữ liệu mẫu (Khuyến nghị thực hiện trước khi test lọc)
-1. Mở thư mục **`1. Departments`**:
-   - Chạy request `Create Department` 2 lần để tạo ít nhất 2 khoa (ví dụ: Khoa CNTT và Khoa Toán).
-2. Mở thư mục **`2. Students - Basic CRUD`**:
-   - Chạy request `Create Student` từ 4 đến 5 lần với các thông tin tên và ngày sinh (`dob`) khác nhau để có tập dữ liệu phong phú (ví dụ các năm sinh 2001, 2002, 2003, 2004).
+### 6.2. Cấu Trúc Các Thư Mục API Trong Collection
+Ngoài bộ Auto-Test, collection còn cung cấp đầy đủ từng API riêng lẻ để bạn tùy chỉnh và gửi thủ công:
+- **`0. 🚀 AUTO-TEST SUITE`**: 24 kịch bản tự động kiểm tra RBAC + HibernateDao từ A-Z.
+- **`1. Authentication & Authorization (JWT & Roles)`**: Đăng nhập Admin, Giảng viên, Sinh viên, Đăng ký, Lấy profile (`/api/auth/me`).
+- **`2. Departments`**: CRUD Khoa và lọc động qua HibernateDao (`/api/departments/filter`, `/search`).
+- **`3. Students - Basic CRUD`**: CRUD Sinh viên cơ bản.
+- **`4. Entity Named Queries`**: Kiểm thử các truy vấn Named Query trong Entity.
+- **`5. Filter, Pagination & Sorting`**: 14 kịch bản kiểm thử lọc động chi tiết cho Sinh viên.
+- **`6. Document Filter & Pagination (HibernateDao)`**: Tải lên, tải về, xóa mềm và 14 kịch bản lọc tài liệu.
+- **`7. Admin User Management (RBAC)`**: Quản trị người dùng, cấp vai trò, khóa/mở tài khoản.
+- **`8. ClassInfo Filter & Pagination (HibernateDao)`**: Lọc động và phân trang Lớp học.
 
-### Bước 4: Kiểm thử thư mục `4. Filter, Pagination & Sorting`
-Thư mục này gồm **14 request mẫu được cấu hình sẵn 100%**, bao gồm:
 
-| STT | Tên Request trong Postman | Mục đích kiểm thử | Query String mẫu | Kết quả mong đợi |
-| :---: | :--- | :--- | :--- | :--- |
-| **1** | `1. Filter by Name (LIKE search)` | Tìm kiếm tên gần đúng (LIKE) | `?search=name:Nguyen` | Danh sách sinh viên có tên chứa "Nguyen" |
-| **2** | `2. Filter by DOB > Date` | Lọc sinh viên sinh sau một ngày | `?search=dob>2003-01-01` | Các sinh viên có ngày sinh > 2003-01-01 |
-| **3** | `3. Filter by DOB < Date` | Lọc sinh viên sinh trước một ngày | `?search=dob<2004-01-01` | Các sinh viên có ngày sinh < 2004-01-01 |
-| **4** | `4. Filter by Department Name` | Lọc qua tên Khoa (Join bảng) | `?search=department.name:Computer` | Các sinh viên thuộc khoa chứa chữ "Computer" |
-| **5** | `5. Multi-criteria Filter` | Kết hợp nhiều điều kiện AND | `?search=name:Van,dob>2002-01-01` | Vừa có tên chứa "Van" vừa sinh sau 2002-01-01 |
-| **6** | `6. Pagination - Page 0, Size 5` | Lấy trang đầu tiên | `?page=0&size=5` | Tối đa 5 bản ghi, kèm `page: 0`, `first: true` |
-| **7** | `7. Pagination - Page 1, Size 5` | Lấy trang kế tiếp | `?page=1&size=5` | 5 bản ghi tiếp theo, `page: 1` |
-| **8** | `8. Sorting - Sort by Name ASC` | Sắp xếp tên từ A đến Z | `?sort=name,asc` | Danh sách sắp xếp theo `name` tăng dần |
-| **9** | `9. Sorting - Sort by DOB DESC` | Sắp xếp ngày sinh giảm dần | `?sort=dob,desc` | Sinh viên trẻ tuổi nhất nằm ở đầu danh sách |
-| **10** | `10. Multi-field Sorting` | Sắp xếp nhiều cột cùng lúc | `?sort=name,asc&sort=dob,desc` | Ưu tiên tên tăng dần, trùng tên thì xếp ngày sinh |
-| **11** | `11. Combined - All Features` | Kết hợp cả Lọc + Phân trang + Sắp xếp | `?search=dob>2002-01-01&page=0&size=5&sort=name,asc` | Lọc theo ngày sinh, phân trang 5 bản ghi, xếp theo tên |
-| **12** | `12. Validation Test - Invalid Field` | Kiểm tra bảo mật trường lọc | `?search=invalidField:test` | `400 Bad Request` thông báo trường không hợp lệ |
-| **13** | `13. Validation Test - Invalid Sort` | Kiểm tra bảo mật trường sắp xếp | `?sort=unknownField,asc` | `400 Bad Request` thông báo sort field không hợp lệ |
-| **14** | `14. Validation Test - Invalid Size` | Kiểm tra giới hạn kích thước trang | `?size=0` | `400 Bad Request` thông báo page size phải từ 1-100 |
-
-### Bước 5: Kiểm thử thư mục `5. Document Filter & Pagination (HibernateDao)`
-Thư mục này gồm **14 request mẫu được cấu hình sẵn 100% cho Document**, bao gồm:
-
-| STT | Tên Request trong Postman | Mục đích kiểm thử | Query String mẫu | Kết quả mong đợi |
-| :---: | :--- | :--- | :--- | :--- |
-| **1** | `1. Get All Documents` | Lấy danh sách tài liệu với phân trang mặc định | (none) | Danh sách sắp xếp `creationTime DESC`, `size: 10` |
-| **2** | `2. Filter by Document Name` | Tìm kiếm tên tài liệu (LIKE) | `?search=name:Project` | Các tài liệu có tên chứa "Project" |
-| **3** | `3. Filter by App ID` | Lọc theo mã ứng dụng | `?search=appId:app-001` | Các tài liệu thuộc appId chỉ định |
-| **4** | `4. Filter by Version` | Lọc theo phiên bản tài liệu | `?search=version:1` | Các tài liệu có version bằng 1 |
-| **5** | `5. Filter by Creation Time > Date` | Lọc tài liệu tạo sau ngày | `?search=creationTime>2026-01-01` | Tài liệu có ngày tạo > 2026-01-01 |
-| **6** | `6. Multi-criteria Filter` | Kết hợp nhiều điều kiện AND | `?search=name:Design,version:2` | Tên chứa "Design" và version = 2 |
-| **7** | `7. Pagination - Page 0, Size 5` | Phân trang trang đầu | `?page=0&size=5` | Tối đa 5 tài liệu, `page: 0`, `first: true` |
-| **8** | `8. Sorting - Sort by Name ASC` | Sắp xếp tên tài liệu tăng dần | `?sort=name,asc` | Sắp xếp A-Z theo `name` |
-| **9** | `9. Multi-field Sorting` | Sắp xếp nhiều trường cùng lúc | `?sort=creationTime,desc&sort=name,asc` | Ưu tiên ngày tạo giảm dần, rồi đến tên |
-| **10** | `10. Combined - All Features` | Kết hợp Lọc + Phân trang + Sắp xếp | `?search=name:Report&page=0&size=5&sort=name,asc` | Lọc theo tên, phân trang 5 bản ghi, xếp A-Z |
-| **11** | `11. Search Alias Endpoint` | Kiểm thử endpoint alias `/api/documents/search` | `?search=name:Report&page=0&size=10` | Hoạt động giống `/api/documents/filter` |
-| **12** | `12. Validation Test - Invalid Sort` | Kiểm tra bảo mật sort whitelist | `?sort=hackerField,asc` | `400 Bad Request` thông báo sort field không hợp lệ |
-| **13** | `13. Validation Test - Invalid Search` | Kiểm tra bảo mật search whitelist | `?search=unsupportedField:val` | `400 Bad Request` thông báo search field không hợp lệ |
-| **14** | `14. Validation Test - Invalid Size` | Kiểm tra giới hạn kích thước trang | `?size=0` | `400 Bad Request` thông báo page size phải từ 1-100 |
-
-### Bước 6: Xem định dạng kết quả trả về trong Postman
-Mỗi request thành công đều trả về JSON chuẩn theo khuôn mẫu sau:
-```json
-{
-    "success": true,
-    "message": "Students filtered successfully",
-    "data": {
-        "content": [
-            {
-                "id": 1,
-                "name": "Nguyen Van A",
-                "dob": "2003-05-20",
-                "department": {
-                    "id": 1,
-                    "name": "Computer Science",
-                    "description": "Khoa Khoa hoc May tinh"
-                }
-            }
-        ],
-        "page": 0,
-        "size": 5,
-        "totalElements": 1,
-        "totalPages": 1,
-        "first": true,
-        "last": true
-    },
-    "timestamp": "2026-10-03 14:34:06"
-}
-```

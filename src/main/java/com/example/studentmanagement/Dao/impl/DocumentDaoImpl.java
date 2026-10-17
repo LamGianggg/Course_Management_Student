@@ -1,6 +1,7 @@
 package com.example.studentmanagement.Dao.impl;
 
 import com.example.studentmanagement.Dao.IDocumentDao;
+import com.example.studentmanagement.HibernateDao.DocumentHibernateDao;
 import com.example.studentmanagement.HibernateDao.HibernateDao;
 import com.example.studentmanagement.HibernateDao.HibernateGenericDao;
 import com.example.studentmanagement.entity.Document;
@@ -32,18 +33,11 @@ public class DocumentDaoImpl extends HibernateGenericDao<String, Document> imple
     );
 
     private final EntityManager entityManager;
-    private final HibernateDao<Document> hibernateDao;
 
     public DocumentDaoImpl(EntityManager entityManager) {
         super(Document.class, entityManager);
         this.entityManager = entityManager;
-        this.hibernateDao = new HibernateDao<>(
-                this,
-                ALLOWED_SEARCH_FIELDS,
-                ALLOWED_SORT_FIELDS,
-                "creationTime",
-                Sort.Direction.DESC
-        );
+        this.hibernateDao = new DocumentHibernateDao(this);
     }
 
     @Override

@@ -1,0 +1,2644 @@
+{
+    "info": {
+        "_postman_id": "c9d8e7f6-a5b4-3210-9876-mergedmaster01",
+        "name": "Course & Student Management System - Complete API & AutoTest Collection",
+        "description": "Bộ Postman Collection Hoàn Chỉnh Duy Nhất kết hợp toàn diện:\n1. AUTO-TEST SUITE: Kiểm thử tự động 100% RBAC (Admin, Lecturer, Student) và HibernateDao (Lọc động, Phân trang, Sắp xếp, Whitelist).\n2. TOÀN BỘ CÁC API CHI TIẾT: Xác thực JWT, Quản trị Admin, CRUD Khoa & Sinh viên, Named Queries, Lọc Document & ClassInfo.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "jwt_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "admin_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "lecturer_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "student_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "created_dept_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "created_student_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "0. 🚀 AUTO-TEST SUITE (Chạy Tự Động 100% RBAC & HibernateDao)",
+            "description": "Folder kiểm thử tự động toàn diện. Bấm chuột phải vào folder này -> chọn 'Run folder' để kiểm tra tự động toàn bộ 24 kịch bản xác thực, phân quyền 200/403, HibernateDao và validation bounds.",
+            "item": [
+                {
+                    "name": "1. KIỂM THỬ XÁC THỰC & ĐĂNG NHẬP (AUTHENTICATION)",
+                    "item": [
+                        {
+                            "name": "01. Login Admin (Lưu admin_token)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code là 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "pm.test(\"Đăng nhập Admin thành công và trả về Token\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.eql(true);",
+                                            "    pm.expect(jsonData.data).to.have.property('token');",
+                                            "    pm.expect(jsonData.data.roles).to.include('ROLE_ADMIN');",
+                                            "    pm.collectionVariables.set(\"admin_token\", jsonData.data.token);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "login"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "02. Verify Admin Profile (/api/auth/me)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code là 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "pm.test(\"Lấy đúng profile của Admin\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.data.username).to.eql('admin');",
+                                            "    pm.expect(jsonData.data.roles).to.include('ROLE_ADMIN');",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/me",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "me"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "03. Login Lecturer (Lưu lecturer_token)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code là 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "pm.test(\"Đăng nhập Giảng viên thành công\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.eql(true);",
+                                            "    pm.expect(jsonData.data.roles).to.include('ROLE_LECTURER');",
+                                            "    pm.collectionVariables.set(\"lecturer_token\", jsonData.data.token);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"username\": \"lecturer\",\n    \"password\": \"lecturer123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "login"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "04. Login Student (Lưu student_token)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code là 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "pm.test(\"Đăng nhập Sinh viên thành công\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.eql(true);",
+                                            "    pm.expect(jsonData.data.roles).to.include('ROLE_STUDENT');",
+                                            "    pm.collectionVariables.set(\"student_token\", jsonData.data.token);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"username\": \"student\",\n    \"password\": \"student123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "login"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "05. Đăng ký tài khoản mới (/api/auth/register)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code là 200 OK hoặc 400 nếu user đã tồn tại\", function () {",
+                                            "    pm.expect(pm.response.code === 200 || pm.response.code === 400).to.be.true;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"username\": \"auto_test_user\",\n    \"password\": \"pass123456\",\n    \"email\": \"autotest@example.com\",\n    \"roles\": [\"ROLE_STUDENT\"]\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/register",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "register"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "2. KIỂM THỬ PHÂN QUYỀN RBAC (ADMIN vs LECTURER vs STUDENT)",
+                    "item": [
+                        {
+                            "name": "06. [RBAC] Admin truy cập quản lý người dùng (Mong đợi 200 OK)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Admin được phép truy cập /api/admin/users - 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.true;",
+                                            "    pm.expect(jsonData.data).to.be.an('array');",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/users",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "admin",
+                                        "users"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "07. [RBAC] Giảng viên truy cập quản lý người dùng (Mong đợi 403 Forbidden)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Giảng viên bị chặn truy cập /api/admin/users - 403 Forbidden\", function () {",
+                                            "    pm.response.to.have.status(403);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.false;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{lecturer_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/users",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "admin",
+                                        "users"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "08. [RBAC] Sinh viên truy cập quản lý người dùng (Mong đợi 403 Forbidden)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Sinh viên bị chặn truy cập /api/admin/users - 403 Forbidden\", function () {",
+                                            "    pm.response.to.have.status(403);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.false;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{student_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/users",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "admin",
+                                        "users"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "09. [RBAC] Sinh viên cố tạo Khoa (Mong đợi 403 Forbidden)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Sinh viên bị chặn tạo Khoa - 403 Forbidden\", function () {",
+                                            "    pm.response.to.have.status(403);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{student_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Hacking Dept\",\n    \"description\": \"Test student authorization\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/departments",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "10. [RBAC] Giảng viên cố tạo Khoa (Mong đợi 403 Forbidden)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Giảng viên bị chặn tạo Khoa - 403 Forbidden\", function () {",
+                                            "    pm.response.to.have.status(403);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{lecturer_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Lecturer Dept\",\n    \"description\": \"Lecturer test\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/departments",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "11. [RBAC] Admin tạo Khoa (Mong đợi 200/201 Thành công)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Admin tạo Khoa thành công - Status 200/201\", function () {",
+                                            "    pm.expect(pm.response.code === 200 || pm.response.code === 201).to.be.true;",
+                                            "    var jsonData = pm.response.json();",
+                                            "    if (jsonData.data && jsonData.data.id) {",
+                                            "        pm.collectionVariables.set(\"created_dept_id\", jsonData.data.id);",
+                                            "    }",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{admin_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Khoa Tự Động Hóa AutoTest\",\n    \"description\": \"Tự động hóa hệ thống\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/departments",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "12. [RBAC] Sinh viên cố tạo Sinh viên mới (Mong đợi 403 Forbidden)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Sinh viên bị chặn tạo hồ sơ sinh viên - 403 Forbidden\", function () {",
+                                            "    pm.response.to.have.status(403);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{student_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Sinh Vien Gia Mao\",\n    \"dob\": \"2004-01-01\",\n    \"department\": {\"id\": 1}\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "13. [RBAC] Giảng viên tạo Sinh viên mới (Mong đợi 200/201 Thành công)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Giảng viên tạo Sinh viên thành công - Status 200/201\", function () {",
+                                            "    pm.expect(pm.response.code === 200 || pm.response.code === 201).to.be.true;",
+                                            "    var jsonData = pm.response.json();",
+                                            "    if (jsonData.data && jsonData.data.id) {",
+                                            "        pm.collectionVariables.set(\"created_student_id\", jsonData.data.id);",
+                                            "    }",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{lecturer_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Nguyen Thi Tu Dong\",\n    \"dob\": \"2003-08-20\",\n    \"department\": {\"id\": 1}\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "14. [RBAC] Giảng viên cố Xóa Sinh viên (Mong đợi 403 Forbidden)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Giảng viên KHÔNG có quyền xóa sinh viên - 403 Forbidden\", function () {",
+                                            "    pm.response.to.have.status(403);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{lecturer_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students/{{created_student_id}}",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students",
+                                        "{{created_student_id}}"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "15. [RBAC] Admin Xóa Sinh viên (Mong đợi 200 Thành công)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Admin được phép xóa sinh viên - 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students/{{created_student_id}}",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students",
+                                        "{{created_student_id}}"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "3. KIỂM THỬ KẾ THỪA HIBERNATEDAO (LỌC ĐỘNG, PHÂN TRANG, SẮP XẾP)",
+                    "item": [
+                        {
+                            "name": "16. [HibernateDao - Student] Lọc theo tên LIKE và phân trang",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code là 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "pm.test(\"Trả về PagedResponse hợp lệ\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.true;",
+                                            "    pm.expect(jsonData.data).to.have.property('content');",
+                                            "    pm.expect(jsonData.data).to.have.property('page');",
+                                            "    pm.expect(jsonData.data).to.have.property('size');",
+                                            "    pm.expect(jsonData.data.page).to.eql(0);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students/filter?search=name:a&page=0&size=5&sort=name,asc",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "search",
+                                            "value": "name:a"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "size",
+                                            "value": "5"
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "name,asc"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "17. [HibernateDao - Student] Lọc theo ngày sinh DOB > Date",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code là 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students/filter?search=dob>2000-01-01&page=0&size=5&sort=dob,desc",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "search",
+                                            "value": "dob>2000-01-01"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "size",
+                                            "value": "5"
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "dob,desc"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "18. [HibernateDao - Department] Lọc khoa theo tên và sắp xếp",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Department filter qua HibernateDao thành công - 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.true;",
+                                            "    pm.expect(jsonData.data.content).to.be.an('array');",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/departments/filter?search=name:o&page=0&size=5&sort=name,asc",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "search",
+                                            "value": "name:o"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "size",
+                                            "value": "5"
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "name,asc"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "19. [HibernateDao - Department] Endpoint Alias (/api/departments/search)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Department search alias thành công - 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/departments/search?search=name:o&page=0&size=5",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments",
+                                        "search"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "search",
+                                            "value": "name:o"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "size",
+                                            "value": "5"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "20. [HibernateDao - ClassInfo] Lọc lớp học và phân trang",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"ClassInfo filter qua HibernateDao thành công - 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.true;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/class-info/filter?page=0&size=10&sort=id,asc",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "class-info",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "size",
+                                            "value": "10"
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "id,asc"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "21. [HibernateDao - Document] Lọc tài liệu theo tên và sắp xếp",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Document filter qua HibernateDao thành công - 200 OK\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.true;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/documents/filter?page=0&size=10&sort=creationTime,desc",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "documents",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "size",
+                                            "value": "10"
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "creationTime,desc"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "4. KIỂM THỬ BẢO MẬT & GIỚI HẠN (VALIDATION BOUNDS & WHITELIST)",
+                    "item": [
+                        {
+                            "name": "22. [Security Whitelist] Sort theo field không hợp lệ (Mong đợi 400 Bad Request)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Hệ thống phát hiện và chặn Sort Injection - 400 Bad Request\", function () {",
+                                            "    pm.response.to.have.status(400);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.false;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students/filter?sort=hackerInjectedField,asc",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "sort",
+                                            "value": "hackerInjectedField,asc"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "23. [Security Whitelist] Search theo field không hợp lệ (Mong đợi 400 Bad Request)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Hệ thống phát hiện và chặn Search Injection - 400 Bad Request\", function () {",
+                                            "    pm.response.to.have.status(400);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.false;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/documents/filter?search=maliciousColumn:hack",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "documents",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "search",
+                                            "value": "maliciousColumn:hack"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "24. [Pagination Bounds] Size = 0 không hợp lệ (Mong đợi 400 Bad Request)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Hệ thống kiểm soát Page Size bounds (1-100) - 400 Bad Request\", function () {",
+                                            "    pm.response.to.have.status(400);",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.success).to.be.false;",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/students/filter?size=0",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "students",
+                                        "filter"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "size",
+                                            "value": "0"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "0. Authentication & Authorization (JWT & Roles)",
+            "item": [
+                {
+                    "name": "1. Login as Admin (Auto sets {{jwt_token}})",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.data && json.data.token) {",
+                                    "        pm.collectionVariables.set(\"jwt_token\", json.data.token);",
+                                    "        console.log(\"Saved JWT Token for Admin\");",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Login as Lecturer",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.data && json.data.token) {",
+                                    "        pm.collectionVariables.set(\"jwt_token\", json.data.token);",
+                                    "        console.log(\"Saved JWT Token for Lecturer\");",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"lecturer\",\n    \"password\": \"lecturer123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Login as Student",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.data && json.data.token) {",
+                                    "        pm.collectionVariables.set(\"jwt_token\", json.data.token);",
+                                    "        console.log(\"Saved JWT Token for Student\");",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"student\",\n    \"password\": \"student123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "4. Register New User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"newstudent\",\n    \"password\": \"password123\",\n    \"email\": \"newstudent@example.com\",\n    \"roles\": [\"ROLE_STUDENT\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "register"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Get Current User Profile (/api/auth/me)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "me"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "1. Departments",
+            "item": [
+                {
+                    "name": "Get All Departments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/departments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "departments"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Department By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/departments/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "departments",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Department",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Software Engineering\",\n    \"description\": \"Khoa Ky Thuat Phan Mem\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/departments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "departments"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Department",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Information Technology - Updated\",\n    \"description\": \"Khoa Cong Nghe Thong Tin (Updated)\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/departments/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "departments",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Department",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/departments/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "departments",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Department Filter, Pagination & Sorting (HibernateDao)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/departments/filter?search=name:Technology&page=0&size=10&sort=name,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "departments",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Technology"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "name,asc"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "2. Students - Basic CRUD",
+            "item": [
+                {
+                    "name": "Get All Students",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Student By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Students By Department ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/department/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "department",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search Students By Name",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/search?keyword=Nguyen",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "keyword",
+                                    "value": "Nguyen"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Student",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Nguyen Van E\",\n    \"dob\": \"2003-08-19\",\n    \"departmentId\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Student",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Nguyen Van E (Updated)\",\n    \"dob\": \"2003-08-19\",\n    \"departmentId\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Student",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "3. Entity Named Queries (Các query viết trong Entity)",
+            "item": [
+                {
+                    "name": "1. Filter by DOB Range (findByDobBetween)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter-by-dob?start=2003-01-01&end=2003-12-31",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter-by-dob"
+                            ],
+                            "query": [
+                                {
+                                    "key": "start",
+                                    "value": "2003-01-01"
+                                },
+                                {
+                                    "key": "end",
+                                    "value": "2003-12-31"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Students Born After Date (findStudentsBornAfter)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/born-after?dob=2003-01-01",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "born-after"
+                            ],
+                            "query": [
+                                {
+                                    "key": "dob",
+                                    "value": "2003-01-01"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Ordered by Department Name (findAllWithDepartmentOrdered)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/ordered-by-dept",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "ordered-by-dept"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "4. Native SQL By Dept Name (findStudentsByDeptNameNative)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/native-by-dept-name?deptName=Information Technology",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "native-by-dept-name"
+                            ],
+                            "query": [
+                                {
+                                    "key": "deptName",
+                                    "value": "Information Technology"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "4. Filter, Pagination & Sorting (JPA Specification & Pageable)",
+            "item": [
+                {
+                    "name": "1. Filter by Name (LIKE search)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?search=name:Nguyen",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Nguyen",
+                                    "description": "Tim kiem theo ten chua 'Nguyen' (khong phan biet hoa thuong)"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Filter by DOB > Date",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?search=dob>2003-01-01",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "dob>2003-01-01",
+                                    "description": "Loc sinh vien sinh sau ngay 2003-01-01"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Filter by DOB < Date",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?search=dob<2004-01-01",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "dob<2004-01-01",
+                                    "description": "Loc sinh vien sinh truoc ngay 2004-01-01"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "4. Filter by Department Name (Join Specification)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?search=department.name:Computer",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "department.name:Computer",
+                                    "description": "Loc theo ten Khoa lien ket (join bang departments)"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Multi-criteria Filter (AND: Name + DOB)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?search=name:Van,dob>2002-01-01",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Van,dob>2002-01-01",
+                                    "description": "Ket hop nhieu dieu kien AND: ten chua 'Van' VA sinh sau 2002-01-01"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "6. Pagination - Page 0, Size 5",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?page=0&size=5",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Trang dau tien (0-indexed)"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "5",
+                                    "description": "So luong sinh vien tren 1 trang"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "7. Pagination - Page 1, Size 5",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?page=1&size=5",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Trang tiep theo"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "8. Sorting - Sort by Name ASC",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?sort=name,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "name,asc",
+                                    "description": "Sap xep ten tang dan (A-Z)"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "9. Sorting - Sort by DOB DESC",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?sort=dob,desc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "dob,desc",
+                                    "description": "Sap xep ngay sinh giam dan (tre nhat len dau)"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "10. Multi-field Sorting (Name ASC, DOB DESC)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?sort=name,asc&sort=dob,desc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "name,asc"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "dob,desc"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "11. Combined - Search + Pagination + Sorting",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?search=dob>2002-01-01&page=0&size=5&sort=name,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "dob>2002-01-01",
+                                    "description": "Dieu kien loc"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Trang"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "5",
+                                    "description": "Kich thuoc trang"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "name,asc",
+                                    "description": "Sap xep"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "12. Validation Test - Invalid Search Field (Expect 400)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?search=invalidField:test",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "invalidField:test",
+                                    "description": "Test bao loi khi truyen field khong hop le"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "13. Validation Test - Invalid Sort Field (Expect 400)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?sort=unknownField,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "unknownField,asc",
+                                    "description": "Test bao loi khi sap xep theo field khong trong whitelist"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "14. Validation Test - Invalid Page Size (Expect 400)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/students/filter?size=0",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "size",
+                                    "value": "0",
+                                    "description": "Size phai tu 1 den 100"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "5. Document Filter & Pagination (HibernateDao)",
+            "item": [
+                {
+                    "name": "1. Get All Documents (Default HibernateDao Paging & Sort)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Filter by Document Name (LIKE search)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?search=name:Project",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Project",
+                                    "description": "Tim kiem tai lieu co ten chua 'Project'"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Filter by App ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?search=appId:app-001",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "appId:app-001",
+                                    "description": "Loc tai lieu theo appId"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "4. Filter by Version",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?search=version:1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "version:1",
+                                    "description": "Loc tai lieu co version bang 1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Filter by Creation Time > Date",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?search=creationTime>2026-01-01",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "creationTime>2026-01-01",
+                                    "description": "Loc tai lieu tao sau ngay 2026-01-01"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "6. Multi-criteria Filter (Name AND Version)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?search=name:Design,version:2",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Design,version:2",
+                                    "description": "Loc tai lieu ten chua Design VA version la 2"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "7. Pagination - Page 0, Size 5",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?page=0&size=5",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "8. Sorting - Sort by Name ASC",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?sort=name,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "name,asc"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "9. Multi-field Sorting (creationTime DESC, name ASC)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?sort=creationTime,desc&sort=name,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "creationTime,desc"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "name,asc"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "10. Combined - Filter + Pagination + Sorting",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?search=name:Report&page=0&size=5&sort=name,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Report"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "5"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "name,asc"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "11. Search Alias Endpoint (/api/documents/search)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/search?search=name:Report&page=0&size=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Report"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "12. Validation Test - Invalid Sort Field (Expect 400)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?sort=hackerField,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "hackerField,asc",
+                                    "description": "Bao loi khi sap xep theo field khong thuoc whitelist"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "13. Validation Test - Invalid Search Field (Expect 400)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?search=unsupportedField:val",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "unsupportedField:val",
+                                    "description": "Bao loi khi tim kiem theo field khong thuoc whitelist"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "14. Validation Test - Invalid Page Size (Expect 400)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/filter?size=0",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "size",
+                                    "value": "0",
+                                    "description": "Page size phai tu 1 den 100"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "6. Admin User Management (RBAC)",
+            "item": [
+                {
+                    "name": "1. Get All Users (Admin Only)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "users"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Update User Roles (Admin Only)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[\n    \"ROLE_ADMIN\",\n    \"ROLE_LECTURER\"\n]"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/users/1/roles",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "users",
+                                "1",
+                                "roles"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Toggle User Status (Admin Only)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/users/1/status?enabled=true",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "users",
+                                "1",
+                                "status"
+                            ],
+                            "query": [
+                                {
+                                    "key": "enabled",
+                                    "value": "true"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "7. ClassInfo Filter & Pagination (HibernateDao)",
+            "item": [
+                {
+                    "name": "ClassInfo Filter, Pagination & Sorting (HibernateDao)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/class-info/filter?search=name:Java&page=0&size=10&sort=id,asc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "class-info",
+                                "filter"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "name:Java"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "id,asc"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

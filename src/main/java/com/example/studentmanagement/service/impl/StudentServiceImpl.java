@@ -13,6 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.example.studentmanagement.Dao.IStudentDao;
+import com.example.studentmanagement.HibernateDao.HibernateDao;
+import com.example.studentmanagement.HibernateDao.StudentHibernateDao;
+
 import java.util.List;
 
 @Service
@@ -20,11 +24,17 @@ public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
     private final DepartmentRepository departmentRepository;
+    private IStudentDao studentDao;
 
     @Autowired
     public StudentServiceImpl(StudentRepository studentRepository, DepartmentRepository departmentRepository) {
         this.studentRepository = studentRepository;
         this.departmentRepository = departmentRepository;
+    }
+
+    @Autowired(required = false)
+    public void setStudentDao(IStudentDao studentDao) {
+        this.studentDao = studentDao;
     }
 
     @Override
@@ -105,6 +115,19 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Page<Student> searchStudents(Specification<Student> spec, Pageable pageable) {
+        if (studentDao != null) {
+            return studentDao.filter(spec, pageable);
+        }
+        return studentRepository.findAll(spec != null ? spec : Specification.where(null), pageable);
+    }
+
+    @Override
+    public Page<Student> filterStudents(String search, int page, int size, List<String> sort) {
+        if (studentDao != null) {
+            return studentDao.filter(search, page, size, sort);
+        }
+        Pageable pageable = HibernateDao.createPageable(page, size, sort, StudentHibernateDao.ALLOWED_SORT_FIELDS);
+        Specification<Student> spec = HibernateDao.parse(search, StudentHibernateDao.ALLOWED_SEARCH_FIELDS);
         return studentRepository.findAll(spec != null ? spec : Specification.where(null), pageable);
     }
 }

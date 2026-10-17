@@ -6,6 +6,9 @@ import com.example.studentmanagement.entity.ClassInfo;
 import com.example.studentmanagement.exception.ResourceNotFoundException;
 import com.example.studentmanagement.service.ClassInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -89,5 +92,15 @@ public class ClassInfoServiceImpl implements ClassInfoService {
     @Override
     public Integer getCount(String query) {
         return classInfoDao.getCount(query);
+    }
+
+    @Override
+    public Page<ClassInfo> searchClassInfo(Specification<ClassInfo> spec, Pageable pageable) {
+        return classInfoDao.filter(spec, pageable);
+    }
+
+    @Override
+    public Page<ClassInfo> filterClassInfo(String search, int page, int size, List<String> sort) {
+        return classInfoDao.filter(search, page, size, sort);
     }
 }

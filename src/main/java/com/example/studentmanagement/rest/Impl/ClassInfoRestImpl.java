@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 
 @RestController
@@ -134,6 +136,21 @@ public class ClassInfoRestImpl implements ClassInfoRest {
             return ResponseEntity.ok(count);
         } catch (Exception e) {
             logger.error("Error getting Class Info count: ", e);
+            throw e;
+        }
+    }
+
+    @Override
+    public ResponseEntity<com.example.studentmanagement.dto.ApiResponse<com.example.studentmanagement.dto.PagedResponse<ClassInfo>>> filterClassInfo(
+            String search, int page, int size, List<String> sort) {
+        try {
+            logger.info("Filtering Class Info: search={}, page={}, size={}, sort={}", search, page, size, sort);
+            Page<ClassInfo> resultPage = classInfoService.filterClassInfo(search, page, size, sort);
+            com.example.studentmanagement.dto.PagedResponse<ClassInfo> pagedResponse =
+                    new com.example.studentmanagement.dto.PagedResponse<>(resultPage);
+            return ResponseEntity.ok(com.example.studentmanagement.dto.ApiResponse.ok("Class Info filtered successfully", pagedResponse));
+        } catch (Exception e) {
+            logger.error("Error filtering Class Info: ", e);
             throw e;
         }
     }

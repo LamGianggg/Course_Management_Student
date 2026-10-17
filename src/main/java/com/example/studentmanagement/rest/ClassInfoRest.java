@@ -90,4 +90,15 @@ public interface ClassInfoRest {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Success|OK"), @ApiResponse(code = 403, message = "Access is denied"), @ApiResponse(code = 404, message = "Not Found!!!")})
     @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<Integer> getClassInfoCount(@ApiParam(value = "Query filter") @RequestParam(required = false) String query);
+
+    // Lọc, phân trang và sắp xếp ClassInfo qua HibernateDao
+    @GetMapping("/filter")
+    @ApiOperation(value = "filter Class Info with pagination and sorting", tags = {"filter"}, authorizations = {@Authorization(value = "default", scopes = {@AuthorizationScope(scope = "ROLE_STUDENT", description = "Student role"), @AuthorizationScope(scope = "ROLE_LECTURER", description = "Lecturer role"), @AuthorizationScope(scope = "ROLE_ADMIN", description = "Admin role")})})
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Success|OK"), @ApiResponse(code = 403, message = "Access is denied"), @ApiResponse(code = 404, message = "Not Found!!!")})
+    @PreAuthorize("hasRole('STUDENT') or hasRole('LECTURER') or hasRole('ADMIN')")
+    ResponseEntity<com.example.studentmanagement.dto.ApiResponse<com.example.studentmanagement.dto.PagedResponse<ClassInfo>>> filterClassInfo(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) List<String> sort);
 }

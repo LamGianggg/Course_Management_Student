@@ -1,0 +1,178 @@
+package com.example.studentmanagement;
+
+import com.example.studentmanagement.dto.*;
+import com.example.studentmanagement.entity.*;
+import com.example.studentmanagement.exception.BusinessException;
+import com.example.studentmanagement.exception.GlobalExceptionHandler;
+import com.example.studentmanagement.exception.ResourceNotFoundException;
+import com.example.studentmanagement.exception.ValidationException;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class DtoAndEntityTest {
+
+    @Test
+    void testApiResponse() {
+        ApiResponse<String> res1 = ApiResponse.ok("success", "data");
+        assertTrue(res1.isSuccess());
+        assertEquals("success", res1.getMessage());
+        assertEquals("data", res1.getData());
+        assertNotNull(res1.getTimestamp());
+
+        ApiResponse<String> res2 = ApiResponse.error("fail");
+        assertFalse(res2.isSuccess());
+        assertEquals("fail", res2.getMessage());
+
+        LocalDateTime now = LocalDateTime.now();
+        ApiResponse<String> res3 = new ApiResponse<>(true, "msg", "data", now);
+        res3.setSuccess(false);
+        res3.setMessage("newMsg");
+        res3.setData("newData");
+        res3.setTimestamp(now);
+        assertFalse(res3.isSuccess());
+        assertEquals("newMsg", res3.getMessage());
+        assertEquals("newData", res3.getData());
+        assertEquals(now, res3.getTimestamp());
+
+        ApiResponse<String> res4 = ApiResponse.ok("just data");
+        assertTrue(res4.isSuccess());
+    }
+
+    @Test
+    void testSearchCriteria() {
+        SearchCriteria criteria = new SearchCriteria("name", ":", "test");
+        assertEquals("name", criteria.getKey());
+        assertEquals(":", criteria.getOperation());
+        assertEquals("test", criteria.getValue());
+
+        criteria.setKey("dob");
+        criteria.setOperation(">");
+        criteria.setValue("2000-01-01");
+        assertEquals("dob", criteria.getKey());
+        assertEquals(">", criteria.getOperation());
+        assertEquals("2000-01-01", criteria.getValue());
+    }
+
+    @Test
+    void testPagedResponse() {
+        PageImpl<String> springPage = new PageImpl<>(List.of("a", "b"), PageRequest.of(0, 10), 2);
+        PagedResponse<String> paged = new PagedResponse<>(springPage);
+        assertEquals(2, paged.getContent().size());
+        assertEquals(0, paged.getPage());
+        assertEquals(10, paged.getSize());
+        assertEquals(2, paged.getTotalElements());
+        assertEquals(1, paged.getTotalPages());
+        assertTrue(paged.isFirst());
+        assertTrue(paged.isLast());
+
+        PagedResponse<String> pagedEmpty = new PagedResponse<>();
+        pagedEmpty.setContent(List.of("c"));
+        pagedEmpty.setPage(1);
+        pagedEmpty.setSize(5);
+        pagedEmpty.setTotalElements(10);
+        pagedEmpty.setTotalPages(2);
+        pagedEmpty.setFirst(false);
+        pagedEmpty.setLast(false);
+        assertEquals(1, pagedEmpty.getContent().size());
+        assertFalse(pagedEmpty.isFirst());
+    }
+
+    @Test
+    void testStudentAndDepartment() {
+        Department dept = new Department();
+        dept.setId(10L);
+        dept.setName("Physics");
+        dept.setDescription("Physics Dept");
+        assertEquals(10L, dept.getId());
+        assertEquals("Physics", dept.getName());
+        assertEquals("Physics Dept", dept.getDescription());
+
+        Student student = new Student();
+        student.setId(100L);
+        student.setName("Alice");
+        student.setDob(LocalDate.of(2004, 2, 2));
+        student.setDepartment(dept);
+        assertEquals(100L, student.getId());
+        assertEquals("Alice", student.getName());
+        assertEquals(LocalDate.of(2004, 2, 2), student.getDob());
+        assertEquals(dept, student.getDepartment());
+    }
+
+    @Test
+    void testClassInfo() {
+        ClassInfo ci = new ClassInfo();
+        ci.setId("c-1");
+        ci.setName("C++");
+        ci.setDomain("Dev");
+        ci.setDescription("Desc");
+        LocalDateTime now = LocalDateTime.now();
+        ci.setCreatedTime(now);
+
+        assertEquals("c-1", ci.getId());
+        assertEquals("C++", ci.getName());
+        assertEquals("Dev", ci.getDomain());
+        assertEquals("Desc", ci.getDescription());
+        assertEquals(now, ci.getCreatedTime());
+    }
+
+    @Test
+    void testDocumentAndAppDetail() {
+        AppDetail ad = new AppDetail();
+        ad.setId("app-1");
+        ad.setName("App One");
+        ad.setDescription("Desc");
+        LocalDateTime now = LocalDateTime.now();
+        ad.setCreatedTime(now);
+
+        assertEquals("app-1", ad.getId());
+        assertEquals("App One", ad.getName());
+        assertEquals("Desc", ad.getDescription());
+        assertEquals(now, ad.getCreatedTime());
+
+        Document doc = new Document();
+        doc.setId("doc-1");
+        doc.setAppId("app-1");
+        doc.setName("test.pdf");
+        doc.setPath("/path/to/test.pdf");
+        doc.setOwner("user");
+        doc.setVersion(1.0);
+        doc.setActive(true);
+        doc.setDeleted(false);
+        doc.setCreationTime(new Date());
+        doc.setModificationTime(new Date());
+
+        assertEquals("doc-1", doc.getId());
+        assertEquals("test.pdf", doc.getName());
+        assertEquals(1.0, doc.getVersion());
+    }
+
+    @Test
+    void testExceptionsAndGlobalHandler() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        ResponseEntity<ApiResponse<Object>> res1 = handler.handleResourceNotFound(new ResourceNotFoundException("Not found"));
+        assertEquals(HttpStatus.NOT_FOUND, res1.getStatusCode());
+
+        ResponseEntity<ApiResponse<Object>> res2 = handler.handleValidationException(new ValidationException("Validation err"));
+        assertEquals(HttpStatus.BAD_REQUEST, res2.getStatusCode());
+
+        ResponseEntity<ApiResponse<Object>> res3 = handler.handleIllegalArgument(new IllegalArgumentException("Illegal arg"));
+        assertEquals(HttpStatus.BAD_REQUEST, res3.getStatusCode());
+
+        ResponseEntity<ApiResponse<Object>> res4 = handler.handleBusinessException(new BusinessException("Business err"));
+        assertEquals(HttpStatus.BAD_REQUEST, res4.getStatusCode());
+
+        ResponseEntity<ApiResponse<Object>> res5 = handler.handleGeneralException(new RuntimeException("General err"));
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, res5.getStatusCode());
+    }
+}

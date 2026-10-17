@@ -19,6 +19,14 @@
 
 	<properties>
 		<java.version>17</java.version>
+
+		<!-- JaCoCo & Sonar Properties (theo chuẩn Baeldung) -->
+		<jacoco.version>0.8.12</jacoco.version>
+		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+		<sonar.jacoco.reportPath>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPath>
+		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.language>java</sonar.language>
 	</properties>
 
 	<!-- ✅ FIX OpenFeign version -->
@@ -173,6 +181,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- JACOCO (theo chuẩn Baeldung) -->
+		<dependency>
+			<groupId>org.jacoco</groupId>
+			<artifactId>jacoco-maven-plugin</artifactId>
+			<version>${jacoco.version}</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -202,6 +217,35 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+
+			<!-- JACOCO MAVEN PLUGIN (theo chuẩn Baeldung) -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>jacoco-initialize</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-site</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- SONARQUBE MAVEN PLUGIN (theo chuẩn Baeldung) -->
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>5.0.0.4389</version>
 			</plugin>
 
 		</plugins>

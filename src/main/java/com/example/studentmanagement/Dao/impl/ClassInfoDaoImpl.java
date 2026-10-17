@@ -1,6 +1,8 @@
 package com.example.studentmanagement.Dao.impl;
 
 import com.example.studentmanagement.Dao.IClassInfoDao;
+import com.example.studentmanagement.HibernateDao.ClassInfoHibernateDao;
+import com.example.studentmanagement.HibernateDao.HibernateDao;
 import com.example.studentmanagement.HibernateDao.HibernateGenericDao;
 import com.example.studentmanagement.entity.ClassInfo;
 import jakarta.persistence.EntityManager;
@@ -8,6 +10,9 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
@@ -19,6 +24,8 @@ public class ClassInfoDaoImpl extends HibernateGenericDao<String, ClassInfo> imp
 
     private static final Logger logger = LoggerFactory.getLogger(ClassInfoDaoImpl.class);
 
+    public static final Set<String> ALLOWED_SEARCH_FIELDS = ClassInfoHibernateDao.ALLOWED_SEARCH_FIELDS;
+    public static final Set<String> ALLOWED_SORT_FIELDS = ClassInfoHibernateDao.ALLOWED_SORT_FIELDS;
     private static final Set<String> ALLOWED_ORDER_BY = Set.of("name", "domain", "createdTime", "id");
 
     private final EntityManager entityManager;
@@ -26,6 +33,7 @@ public class ClassInfoDaoImpl extends HibernateGenericDao<String, ClassInfo> imp
     public ClassInfoDaoImpl(final EntityManager entityManager) {
         super(ClassInfo.class, entityManager);
         this.entityManager = entityManager;
+        this.hibernateDao = new ClassInfoHibernateDao(this);
     }
 
     @Override
@@ -113,7 +121,6 @@ public class ClassInfoDaoImpl extends HibernateGenericDao<String, ClassInfo> imp
             if (hasQuery) {
                 typedQuery.setParameter("query", query.trim());
             }
-            // lowerLimit = offset (firstResult), upperLimit = end position -> maxResults = upper - lower
             if (lowerLimit != null && lowerLimit >= 0) {
                 typedQuery.setFirstResult(lowerLimit);
             }
@@ -146,5 +153,25 @@ public class ClassInfoDaoImpl extends HibernateGenericDao<String, ClassInfo> imp
             logger.warn("Get ClassInfo count failed, returning 0", e);
             return 0;
         }
+    }
+
+    @Override
+    public Page<ClassInfo> findAll(Pageable pageable) {
+        return super.findAll(pageable);
+    }
+
+    @Override
+    public Page<ClassInfo> filter(Specification<ClassInfo> spec, Pageable pageable) {
+        return super.findAll(spec != null ? spec : Specification.where(null), pageable);
+    }
+
+    @Override
+    public Page<ClassInfo> filter(String search, int page, int size, List<String> sortParams) {
+        return this.hibernateDao.find(search, page, size, sortParams);
+    }
+
+    @Override
+    public HibernateDao<ClassInfo> getHibernateDao() {
+        return this.hibernateDao;
     }
 }

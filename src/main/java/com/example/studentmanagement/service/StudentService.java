@@ -25,5 +25,6 @@ public interface StudentService {
 
     // Phase 1+2+3: Specification-based search with pagination and sorting
     Page<Student> searchStudents(Specification<Student> spec, Pageable pageable);
+    Page<Student> filterStudents(String search, int page, int size, List<String> sort);
 }
 

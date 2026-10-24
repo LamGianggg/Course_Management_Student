@@ -89,7 +89,13 @@ public class WebSecurityConfig {
                                 "/api/students/**",
                                 "/api/departments/**",
                                 "/api/documents/**",
-                                "/documents/**"
+                                "/documents/**",
+                                "/api/security-tests/**",
+                                "/api/user-info/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/api/security-tests/**",
+                                "/api/user-info/**"
                         ).permitAll()
 
                         // Role-based permissions for Student mutations

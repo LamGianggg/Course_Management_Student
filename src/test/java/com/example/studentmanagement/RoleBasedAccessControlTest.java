@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -181,5 +182,57 @@ public class RoleBasedAccessControlTest {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("testadmin"));
+    }
+
+    @Test
+    void testRegisterDuplicateEmail() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest(
+                "unique_user_99", "testadmin@educaze.com", "pass123", "Dup Email", Set.of("ROLE_STUDENT")
+        );
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Email is already in use!"));
+    }
+
+    @Test
+    void testRegisterRolesVariations() throws Exception {
+        // null roles
+        RegisterRequest reqNullRoles = new RegisterRequest(
+                "nullroles_user", "nullroles@educaze.com", "pass123", "Null Roles", null
+        );
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reqNullRoles)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.roles[0]").value("ROLE_STUDENT"));
+
+        // empty roles
+        RegisterRequest reqEmptyRoles = new RegisterRequest(
+                "emptyroles_user", "emptyroles@educaze.com", "pass123", "Empty Roles", Set.of()
+        );
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reqEmptyRoles)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.roles[0]").value("ROLE_STUDENT"));
+
+        // roles with ROLE_ADMIN, ROLE_LECTURER, and other role
+        RegisterRequest reqMultiRoles = new RegisterRequest(
+                "multiroles_user", "multiroles@educaze.com", "pass123", "Multi Roles",
+                Set.of("ROLE_ADMIN", "ROLE_LECTURER", "random_role")
+        );
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reqMultiRoles)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void testGetCurrentUserUnauthenticated() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
     }
 }

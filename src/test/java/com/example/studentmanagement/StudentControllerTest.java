@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import org.springframework.data.domain.PageImpl;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -121,5 +122,66 @@ public class StudentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
         verify(studentService, times(1)).deleteStudent(1L);
+    }
+
+    @Test
+    void testSearchStudents() throws Exception {
+        when(studentService.searchStudentsByName("Nguyen")).thenReturn(List.of(student));
+
+        mockMvc.perform(get("/api/students/search?keyword=Nguyen"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].name").value("Nguyen Van A"));
+    }
+
+    @Test
+    void testFilterByDob() throws Exception {
+        when(studentService.getStudentsByDobRange(any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(List.of(student));
+
+        mockMvc.perform(get("/api/students/filter-by-dob?start=2000-01-01&end=2005-12-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void testBornAfter() throws Exception {
+        when(studentService.getStudentsBornAfter(any(LocalDate.class)))
+                .thenReturn(List.of(student));
+
+        mockMvc.perform(get("/api/students/born-after?dob=2002-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void testOrderedByDept() throws Exception {
+        when(studentService.getAllWithDepartmentOrdered())
+                .thenReturn(List.of(student));
+
+        mockMvc.perform(get("/api/students/ordered-by-dept"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void testNativeByDeptName() throws Exception {
+        when(studentService.getStudentsByDeptNameNative("Information Tech"))
+                .thenReturn(List.of(student));
+
+        mockMvc.perform(get("/api/students/native-by-dept-name?deptName=Information Tech"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void testFilterStudents() throws Exception {
+        when(studentService.searchStudents(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(student)));
+
+        mockMvc.perform(get("/api/students/filter?search=name:Nguyen&page=0&size=10&sort=name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].name").value("Nguyen Van A"));
     }
 }

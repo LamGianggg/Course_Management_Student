@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import org.springframework.data.domain.PageImpl;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -104,5 +105,16 @@ public class DepartmentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
         verify(departmentService, times(1)).deleteDepartment(1L);
+    }
+
+    @Test
+    void testFilterDepartments() throws Exception {
+        when(departmentService.searchDepartments(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(department)));
+
+        mockMvc.perform(get("/api/departments/filter?search=name:Computer&page=0&size=10&sort=name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].name").value("Computer Science"));
     }
 }

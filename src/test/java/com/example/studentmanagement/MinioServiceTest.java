@@ -3,6 +3,7 @@ package com.example.studentmanagement;
 import com.example.studentmanagement.exception.BusinessException;
 import com.example.studentmanagement.service.impl.MinioServiceImpl;
 import io.minio.*;
+import io.minio.errors.ErrorResponseException;
 import io.minio.messages.ErrorResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,6 +80,52 @@ public class MinioServiceTest {
         doThrow(new RuntimeException("Remove err")).when(minioClient).removeObject(any(RemoveObjectArgs.class));
 
         assertThrows(BusinessException.class, () -> minioService.deleteFile(BUCKET, PATH));
+    }
+
+    @Test
+    void testEnsureBucketExists_Error() throws Exception {
+        when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenThrow(new RuntimeException("Network err"));
+        assertDoesNotThrow(() -> minioService.ensureBucketExists(BUCKET));
+    }
+
+    @Test
+    void testDownloadFile_Success() throws Exception {
+        GetObjectResponse mockResponse = mock(GetObjectResponse.class);
+        byte[] expected = "file content".getBytes();
+        when(mockResponse.readAllBytes()).thenReturn(expected);
+        when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(mockResponse);
+
+        byte[] result = minioService.downloadFile(BUCKET, PATH);
+        assertArrayEquals(expected, result);
+    }
+
+    @Test
+    void testDownloadFile_NoSuchKey() throws Exception {
+        ErrorResponseException ex = mock(ErrorResponseException.class);
+        ErrorResponse errorResponse = mock(ErrorResponse.class);
+        when(errorResponse.code()).thenReturn("NoSuchKey");
+        when(ex.errorResponse()).thenReturn(errorResponse);
+        when(minioClient.getObject(any(GetObjectArgs.class))).thenThrow(ex);
+
+        assertThrows(BusinessException.class, () -> minioService.downloadFile(BUCKET, PATH));
+    }
+
+    @Test
+    void testDownloadFile_OtherErrorResponse() throws Exception {
+        ErrorResponseException ex = mock(ErrorResponseException.class);
+        ErrorResponse errorResponse = mock(ErrorResponse.class);
+        when(errorResponse.code()).thenReturn("AccessDenied");
+        when(ex.errorResponse()).thenReturn(errorResponse);
+        when(minioClient.getObject(any(GetObjectArgs.class))).thenThrow(ex);
+
+        assertThrows(BusinessException.class, () -> minioService.downloadFile(BUCKET, PATH));
+    }
+
+    @Test
+    void testDownloadFile_GenericException() throws Exception {
+        when(minioClient.getObject(any(GetObjectArgs.class))).thenThrow(new RuntimeException("Read error"));
+
+        assertThrows(BusinessException.class, () -> minioService.downloadFile(BUCKET, PATH));
     }
 
     @Test

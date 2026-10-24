@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -174,5 +175,111 @@ public class DtoAndEntityTest {
 
         ResponseEntity<ApiResponse<Object>> res5 = handler.handleGeneralException(new RuntimeException("General err"));
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, res5.getStatusCode());
+    }
+
+    @Test
+    void testUserAndUserDto() {
+        User user = new User("admin", "admin@example.com", "pass", "Admin User");
+        user.setId(1L);
+        user.setEnabled(true);
+        user.setRoles(Set.of(RoleType.ROLE_ADMIN));
+        LocalDateTime now = LocalDateTime.now();
+        user.setCreatedAt(now);
+
+        assertEquals(1L, user.getId());
+        assertEquals("admin", user.getUsername());
+        assertEquals("admin@example.com", user.getEmail());
+        assertEquals("pass", user.getPassword());
+        assertEquals("Admin User", user.getFullName());
+        assertTrue(user.isEnabled());
+        assertEquals(now, user.getCreatedAt());
+        assertEquals(1, user.getRoles().size());
+
+        UserDto dto = new UserDto(user);
+        assertEquals(1L, dto.getId());
+        assertEquals("admin", dto.getUsername());
+        assertEquals("admin@example.com", dto.getEmail());
+        assertEquals("Admin User", dto.getFullName());
+        assertTrue(dto.isEnabled());
+        assertEquals(now, dto.getCreatedAt());
+        assertTrue(dto.getRoles().contains("ROLE_ADMIN"));
+
+        // UserDto with null roles
+        User userNoRoles = new User();
+        userNoRoles.setRoles(null);
+        UserDto dtoNoRoles = new UserDto(userNoRoles);
+        assertNotNull(dtoNoRoles.getRoles());
+        assertTrue(dtoNoRoles.getRoles().isEmpty());
+
+        UserDto emptyDto = new UserDto();
+        emptyDto.setId(2L);
+        emptyDto.setUsername("user2");
+        emptyDto.setEmail("user2@example.com");
+        emptyDto.setFullName("User Two");
+        emptyDto.setEnabled(false);
+        emptyDto.setRoles(Set.of("ROLE_STUDENT"));
+        emptyDto.setCreatedAt(now);
+        assertEquals(2L, emptyDto.getId());
+        assertEquals("user2", emptyDto.getUsername());
+        assertEquals("user2@example.com", emptyDto.getEmail());
+        assertEquals("User Two", emptyDto.getFullName());
+        assertFalse(emptyDto.isEnabled());
+        assertEquals(now, emptyDto.getCreatedAt());
+        assertEquals(1, emptyDto.getRoles().size());
+    }
+
+    @Test
+    void testJwtResponse() {
+        JwtResponse jwt = new JwtResponse("token123", 1L, "user", "user@test.com", "Full Name", List.of("ROLE_ADMIN"));
+        assertEquals("token123", jwt.getToken());
+        assertEquals("Bearer", jwt.getType());
+        assertEquals(1L, jwt.getId());
+        assertEquals("user", jwt.getUsername());
+        assertEquals("user@test.com", jwt.getEmail());
+        assertEquals("Full Name", jwt.getFullName());
+        assertEquals(1, jwt.getRoles().size());
+
+        JwtResponse empty = new JwtResponse();
+        empty.setToken("tok");
+        empty.setType("Custom");
+        empty.setId(2L);
+        empty.setUsername("u");
+        empty.setEmail("e@e.com");
+        empty.setFullName("fn");
+        empty.setRoles(List.of());
+        assertEquals("tok", empty.getToken());
+        assertEquals("Custom", empty.getType());
+        assertEquals(2L, empty.getId());
+        assertEquals("u", empty.getUsername());
+        assertEquals("e@e.com", empty.getEmail());
+        assertEquals("fn", empty.getFullName());
+        assertTrue(empty.getRoles().isEmpty());
+    }
+
+    @Test
+    void testClassInfoWrapper() {
+        ClassInfoWrapper w = new ClassInfoWrapper("Course", "Domain", "Desc");
+        w.setId("id-1");
+        assertEquals("id-1", w.getId());
+        assertEquals("Course", w.getName());
+        assertEquals("Domain", w.getDomain());
+        assertEquals("Desc", w.getDescription());
+
+        ClassInfoWrapper empty = new ClassInfoWrapper();
+        empty.setId("id-2");
+        empty.setName("N");
+        empty.setDomain("D");
+        empty.setDescription("De");
+        assertEquals("id-2", empty.getId());
+        assertEquals("N", empty.getName());
+        assertEquals("D", empty.getDomain());
+        assertEquals("De", empty.getDescription());
+    }
+
+    @Test
+    void testRoleType() {
+        assertEquals("ADMIN", RoleType.ROLE_ADMIN.getCleanName());
+        assertEquals("LECTURER", RoleType.ROLE_LECTURER.getCleanName());
+        assertEquals("STUDENT", RoleType.ROLE_STUDENT.getCleanName());
     }
 }
